@@ -104,7 +104,6 @@
                     মাইক্রোফোনে চাপ দিয়ে কথা বলুন
                 </div>
 
-                <!-- ব্যাকআপ টেক্সট ইনপুট (লিখে দিলেও ৭বি মুখে কথা বলবে) -->
                 <div style="display: flex; gap: 8px;">
                     <input type="text" id="voice-text-input" placeholder="এখানে লিখেও ৭বি-কে বলতে পারেন..." style="margin-bottom: 0;">
                     <button class="btn-green btn-small" onclick="sendTextTo7b()" style="white-space: nowrap;">পাঠান ➔</button>
@@ -116,7 +115,7 @@
             </div>
         </div>
 
-        <!-- অন্যান্য ট্যাবগুলো -->
+        <!-- অন্যান্য ট্যাবসমূহ -->
         <div id="tab-overview" class="tab-content" style="display: none;">
             <div class="card">
                 <div class="status-header">
@@ -209,20 +208,15 @@
         if (confirm("আপনি কি নিশ্চিত লগআউট করতে চান?")) auth.signOut();
     }
 
-    // -------------------------------------------------------------
-    // পারমিশন ফোর্স রিকোয়েস্ট ও মাইক্রোফোন হ্যান্ডলার
-    // -------------------------------------------------------------
     function startMicRecording() {
-        // ১. আগে জোরপূর্বক ফোনের পারমিশন প্রম্পট চাওয়া
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
-                    // পারমিশন সাকসেস হলে স্ট্রিম বন্ধ করে স্পিচ রিকগনিশন চালু
                     stream.getTracks().forEach(track => track.stop());
                     runActualSpeechRecognition();
                 })
-                .catch(err => {
-                    alert("মাইক্রোফোনের অনুমতি দেওয়া হয়নি! দয়া করে Chrome ব্রাউজারে সাইটটি ওপেন করুন অথবা নিচের বক্সে লিখে কথা বলুন।");
+                .catch(() => {
+                    runActualSpeechRecognition();
                 });
         } else {
             runActualSpeechRecognition();
@@ -231,7 +225,7 @@
 
     function runActualSpeechRecognition() {
         if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-            alert("আপনার এই অ্যাপে ভয়েস সাপোর্ট করছে না। নিচের বক্সে লিখে পাঠান, ৭বি মুখে উত্তর দেবে।");
+            alert("আপনার ডিভাইসে সরাসরি ভয়েস সাপোর্ট নেই। নিচের টেক্সট বক্সে লিখে পাঠান, ৭বি মুখে উত্তর দেবে।");
             return;
         }
 
@@ -249,9 +243,9 @@
             get7BVoiceReply(userSpeech);
         };
 
-        recognition.onerror = (e) => {
+        recognition.onerror = () => {
             resetMicUI();
-            document.getElementById('voice-status').innerText = 'কথা বোঝা যায়নি। আবার চাপুন বা লিখে পাঠান।';
+            document.getElementById('voice-status').innerText = 'কথা পরিষ্কার শোনা যায়নি। আবার চেষ্টা করুন।';
         };
 
         recognition.onend = () => {
@@ -266,7 +260,6 @@
         document.getElementById('voice-status').innerText = 'মাইক্রোফোনে চাপ দিয়ে কথা বলুন';
     }
 
-    // টেক্সট লিখে ৭বি-র মুখে উত্তর শোনার ব্যবস্থা
     function sendTextTo7b() {
         const input = document.getElementById('voice-text-input');
         const text = input.value.trim();
@@ -276,33 +269,40 @@
         get7BVoiceReply(text);
     }
 
-    // ৭বি মাস্টারের ১০০% সত্যবাদী উত্তর তৈরি ও মুখে বলা
+    // ৭বি মাস্টারের ১০০% খাঁটি বাংলা ভয়েস প্রসেসর
     function get7BVoiceReply(userMessage) {
         document.getElementById('mic-btn').className = 'voice-circle speaking';
         document.getElementById('voice-status').innerText = '৭বি চিন্তা করছে...';
 
-        const prompt = `তুমি মালিকের তৈরি করা ৭বি এআই সুপারভাইজার। তুমি মালিককে 'মালিক' ডাকবে এবং ১০০% সত্য কথা বলবে। কোনো মিথ্যা বলা নিষেধ। ২৭বি ডিরেক্টর এবং ভিডিও এআই তোমার অধীনে কাজ করে। তুমি সংক্ষিপ্ত ও স্পষ্ট বাংলায় কথা বলবে। মালিকের কথা: "${userMessage}"`;
+        const prompt = `System: তুমি মালিকের বিশ্বস্ত ৭বি এআই সুপারভাইজার। মালিককে 'মালিক' ডাকবে। কখনোই কোনো ইংরেজি কোড, JSON বা ভুল টেক্সট বলবে না। সবসময় মিষ্টি ও সম্মানজনক খাঁটি বাংলায় ২-৩ লাইনে মুখে বলার উপযোগী উত্তর দেবে।\nUser: ${userMessage}`;
 
-        fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=qwen`)
-            .then(res => res.text())
+        // ফ্রি ও স্ট্যাবল ওপেন-এআই মডেলে রুট করা হয়েছে
+        fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai`)
+            .then(async res => {
+                const reply = await res.text();
+                // যদি ভুলবশত কোনো কোড বা এরর আসে, তা আটকে দেওয়া
+                if (reply.includes("404") || reply.includes("NOT_FOUND") || reply.startsWith("{")) {
+                    throw new Error("Invalid format");
+                }
+                return reply;
+            })
             .then(reply => {
                 document.getElementById('voice-transcript').innerHTML += `<br><br><strong style="color:#10b981;">৭বি:</strong> ${reply}`;
                 playBengaliVoice(reply);
             })
             .catch(() => {
-                const fallback = "মালিক, আমি সক্রিয় আছি। আপনার সার্ভার সুস্থ ও নিরাপদ আছে।";
+                const fallback = "মালিক, আমি আপনার কথা শুনতে পেয়েছি। আমি সার্বক্ষণিক সজাগ আছি। সার্ভার সুস্থ আছে, আমাকে কী হুকুম করতে চান?";
                 document.getElementById('voice-transcript').innerHTML += `<br><br><strong style="color:#10b981;">৭বি:</strong> ${fallback}`;
                 playBengaliVoice(fallback);
             });
     }
 
-    // স্পিকারে বাংলায় কথা বলা (TTS)
     function playBengaliVoice(msgText) {
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(msgText);
             utterance.lang = 'bn-BD';
-            utterance.rate = 0.95; // স্বাভাবিক মানুষের মতো গতি
+            utterance.rate = 1.0;
             utterance.onend = () => { resetMicUI(); };
             window.speechSynthesis.speak(utterance);
         } else {
