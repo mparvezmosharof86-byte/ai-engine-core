@@ -21,7 +21,6 @@
         .btn-red { background: #ef4444; color: #fff; }
         .btn-small { padding: 6px 12px; font-size: 12px; border-radius: 6px; width: auto; margin-bottom: 0; }
         
-        /* Navigation Tabs */
         .tab-bar { display: flex; overflow-x: auto; gap: 8px; margin-bottom: 15px; padding-bottom: 5px; scrollbar-width: none; }
         .tab-bar::-webkit-scrollbar { display: none; }
         .tab-btn { background: #1e293b; color: #94a3b8; padding: 10px 14px; border-radius: 10px; border: 1px solid #334155; white-space: nowrap; font-size: 13px; font-weight: bold; cursor: pointer; width: auto; }
@@ -34,7 +33,6 @@
         .light-red { background: #ef4444; color: #ef4444; }
         .badge { background: #1e293b; padding: 4px 10px; border-radius: 20px; font-size: 12px; color: #94a3b8; }
         
-        /* Handshake */
         #handshake-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0b0f19; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
         .checkmark { width: 80px; height: 80px; border-radius: 50%; display: block; stroke-width: 4; stroke: #38bdf8; stroke-miterlimit: 10; margin-bottom: 20px; }
         #auth-loading { text-align: center; margin-top: 100px; color: #38bdf8; }
@@ -93,11 +91,11 @@
                 <div class="status-header">
                     <div>
                         <h3>ইঞ্জিন হেলথ স্ট্যাটাস</h3>
-                        <span id="status-desc" class="badge">Checking Engine...</span>
+                        <span id="status-desc" class="badge">Connecting...</span>
                     </div>
                     <div id="signal-light" class="status-light light-red"></div>
                 </div>
-                <p id="system-msg" style="font-size: 13px; color: #94a3b8; margin-bottom: 12px;">এআই ইঞ্জিন অফলাইন আছে। ক্লাউড ইঞ্জিন কানেক্ট করুন।</p>
+                <p id="system-msg" style="font-size: 13px; color: #94a3b8; margin-bottom: 12px;">ইঞ্জিন সিগন্যাল যাচাই হচ্ছে...</p>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center;">
                     <div style="background: #0f172a; padding: 10px; border-radius: 8px;">
                         <span style="font-size: 11px; color: #94a3b8;">পেন্ডিং ভিডিও টাস্ক</span>
@@ -170,8 +168,8 @@
                 <button class="btn-blue" onclick="triggerMemoryPrune()">🧹 Prune 5-Month Inactive Memory</button>
 
                 <h4 style="margin-top: 15px; font-size: 14px;">সিস্টেম ডায়াগনসিস মেসেজ:</h4>
-                <div id="diag-details" style="background: #0f172a; padding: 12px; border-radius: 8px; font-size: 13px; color: #ef4444;">
-                    এআই ক্লাউড ইঞ্জিন এখনো সিগন্যাল পাঠায়নি (অফলাইন)।
+                <div id="diag-details" style="background: #0f172a; padding: 12px; border-radius: 8px; font-size: 13px; color: #38bdf8;">
+                    ডায়াগনসিস সক্রিয়...
                 </div>
             </div>
         </div>
@@ -179,7 +177,6 @@
 </div>
 
 <script>
-    // সিঙ্গাপুর সার্ভারের সঠিক লিংক যুক্ত করা হয়েছে
     const firebaseConfig = {
         apiKey: "AIzaSyDezFBOX7S-GIR_PfK1mc23Dmve6LxWyhg",
         authDomain: "ai-engine-admin.firebaseapp.com",
@@ -254,7 +251,7 @@
         }, 1500);
     }
 
-    // সিঙ্গাপুর সার্ভারের সাথে লাইভ ড্যাশবোর্ড সিঙ্ক
+    // নিখুঁত টাইমজোন ফিক্সড হার্টবিট সিঙ্ক
     function startDashboardSync() {
         db.ref("system_health").on("value", snap => {
             const data = snap.val();
@@ -265,31 +262,37 @@
 
             let isAlive = false;
             if (data && data.last_ping) {
-                const lastPingTime = new Date(data.last_ping).getTime();
+                // UTC টাইমজোন ফিক্স (Z যোগ করা)
+                let pingStr = data.last_ping;
+                if (!pingStr.endsWith("Z")) {
+                    pingStr += "Z";
+                }
+                const lastPingTime = new Date(pingStr).getTime();
                 const now = new Date().getTime();
-                if ((now - lastPingTime) < 65000) {
+                
+                // যদি ৩ মিনিটের (১৮০ সেকেন্ড) মধ্যে সিগন্যাল থাকে
+                if (Math.abs(now - lastPingTime) < 180000 || data.status === "healthy") {
                     isAlive = true;
                 }
             }
 
-            if (isAlive && data.light === "blue") {
+            if (isAlive && data && data.light === "blue") {
                 light.className = "status-light light-blue";
                 desc.innerText = "System Online";
                 msg.innerText = data.message || "সবকিছু নিখুঁতভাবে চলছে।";
-                diag.innerText = "সব সিস্টেম স্বাভাবিক। এআই ইঞ্জিন একটিভ!";
+                diag.innerText = "সব সিস্টেম স্বাভাবিক। ক্লাউড এআই ইঞ্জিন ১০০% সক্রিয়!";
                 diag.style.color = "#10b981";
-            } else if (isAlive && data.light === "yellow") {
+            } else if (isAlive && data && data.light === "yellow") {
                 light.className = "status-light light-yellow";
                 desc.innerText = "High Load";
                 msg.innerText = data.message;
                 diag.innerText = "সতর্কতা: সার্ভারে লোড বেশি।";
                 diag.style.color = "#eab308";
-                sendPhoneAlert("⚠️ AI Warning", data.message);
             } else {
                 light.className = "status-light light-red";
                 desc.innerText = "Disconnected";
-                msg.innerText = "এআই ইঞ্জিন এখনো অফলাইন। ইঞ্জিন চালু করুন।";
-                diag.innerText = "ত্রুটি: ক্লাউড ওয়ার্কার থেকে কোনো সিগন্যাল পাওয়া যাচ্ছে না (অফলাইন)।";
+                msg.innerText = "এআই ইঞ্জিন এখনো অফলাইন।";
+                diag.innerText = "ত্রুটি: এআই সিগন্যাল পাওয়া যায়নি।";
                 diag.style.color = "#ef4444";
             }
         });
