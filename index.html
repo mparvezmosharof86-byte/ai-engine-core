@@ -14,7 +14,7 @@
         .container { max-width: 550px; margin: auto; padding: 15px; }
         .card { background: #151c2c; border-radius: 16px; padding: 18px; margin-bottom: 16px; border: 1px solid #222f47; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
         h2, h3, h4 { color: #38bdf8; margin-bottom: 10px; }
-        input, textarea, select { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 14px; }
+        input, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 14px; }
         button { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 14px; margin-bottom: 8px; }
         .btn-blue { background: #0284c7; color: #fff; }
         .btn-green { background: #10b981; color: #fff; }
@@ -39,7 +39,6 @@
         .checkmark { width: 80px; height: 80px; border-radius: 50%; display: block; stroke-width: 4; stroke: #38bdf8; stroke-miterlimit: 10; margin-bottom: 20px; }
         #auth-loading { text-align: center; margin-top: 100px; color: #38bdf8; }
 
-        /* API Key List item */
         .api-item { background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #1e293b; }
         .video-item { background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; border-left: 4px solid #38bdf8; }
     </style>
@@ -47,7 +46,6 @@
 <body>
 
 <div class="container">
-    <!-- লোডিং স্ক্রিন -->
     <div id="auth-loading">
         <h3>অ্যাডমিন সেশন ভেরিফাই হচ্ছে...</h3>
     </div>
@@ -61,7 +59,7 @@
         <button class="btn-blue" onclick="adminLogin()">প্রবেশ করুন (Secure Login)</button>
     </div>
 
-    <!-- হ্যান্ডশেক ওভারলে (ব্লু টিক) -->
+    <!-- হ্যান্ডশেক ওভারলে -->
     <div id="handshake-overlay">
         <svg class="checkmark" viewBox="0 0 52 52">
             <circle cx="26" cy="26" r="25" fill="none" stroke="#38bdf8" stroke-width="4"/>
@@ -73,7 +71,6 @@
 
     <!-- মূল কন্ট্রোল ড্যাশবোর্ড -->
     <div id="dashboard-section" style="display: none;">
-        <!-- টপ হেডার -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <div>
                 <h3 style="margin: 0; font-size: 16px;">AI COMMAND CENTER</h3>
@@ -82,7 +79,6 @@
             <button class="btn-red btn-small" onclick="adminLogout()">🚪 লগআউট</button>
         </div>
 
-        <!-- ৫টি মূল নেভিগেশন ট্যাব -->
         <div class="tab-bar">
             <button class="tab-btn active" onclick="switchTab('tab-overview')">📊 ওভারভিউ</button>
             <button class="tab-btn" onclick="switchTab('tab-api')">⚡ API ও বিলিং</button>
@@ -91,17 +87,18 @@
             <button class="tab-btn" onclick="switchTab('tab-diag')">🛠️ রিপেয়ার ও লগ</button>
         </div>
 
-        <!-- ট্যাব ১: ওভারভিউ -->
+        <!-- ট্যাব ১: ওভারভিউ (এখন ডিফল্টভাবে ডিসকানেক্টেড লাল বাতি থাকবে) -->
         <div id="tab-overview" class="tab-content">
             <div class="card">
                 <div class="status-header">
                     <div>
                         <h3>ইঞ্জিন হেলথ স্ট্যাটাস</h3>
-                        <span id="status-desc" class="badge">Checking...</span>
+                        <span id="status-desc" class="badge">Checking Engine...</span>
                     </div>
-                    <div id="signal-light" class="status-light light-blue"></div>
+                    <!-- ডিফল্টভাবে বাতি লাল (Disconnected) -->
+                    <div id="signal-light" class="status-light light-red"></div>
                 </div>
-                <p id="system-msg" style="font-size: 13px; color: #94a3b8; margin-bottom: 12px;">ইঞ্জিন সক্রিয় আছে।</p>
+                <p id="system-msg" style="font-size: 13px; color: #94a3b8; margin-bottom: 12px;">এআই ইঞ্জিন অফলাইন আছে। ক্লাউড ইঞ্জিন কানেক্ট করুন।</p>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center;">
                     <div style="background: #0f172a; padding: 10px; border-radius: 8px;">
                         <span style="font-size: 11px; color: #94a3b8;">পেন্ডিং ভিডিও টাস্ক</span>
@@ -117,7 +114,6 @@
 
         <!-- ট্যাব ২: API ও কমার্শিয়াল বিলিং -->
         <div id="tab-api" class="tab-content" style="display: none;">
-            <!-- ইন্টারনাল অ্যাপ কি -->
             <div class="card">
                 <h3>🔄 ইন্টারনাল ইউজার অ্যাপ সিঙ্ক</h3>
                 <p style="font-size: 12px; color: #94a3b8; margin-bottom: 10px;">নতুন কি তৈরি করলে ইউজার অ্যাপ স্বয়ংক্রিয়ভাবে কানেক্ট হবে:</p>
@@ -125,12 +121,11 @@
                 <button class="btn-blue" onclick="generateNewApiKey()">Generate Internal Sync Key</button>
             </div>
 
-            <!-- B2B ডেভেলপার এপিআই (Google AI Studio স্টাইল) -->
             <div class="card">
                 <h3>💼 B2B ডেভেলপার API ও বিলিং</h3>
                 <p style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">বাইরের ডেভেলপারদের জন্য পেইড API কি তৈরি করুন:</p>
-                <input type="text" id="dev-name" placeholder="ক্লায়েন্ট/অ্যাপের নাম (যেমন: Rafiq Video App)">
-                <input type="number" id="dev-credits" placeholder="ক্রেডিট/ভিডিও ব্যালেন্স (যেমন: 50)">
+                <input type="text" id="dev-name" placeholder="ক্লায়েন্ট/অ্যাপের নাম">
+                <input type="number" id="dev-credits" placeholder="ক্রেডিট/ভিডিও ব্যালেন্স">
                 <button class="btn-green" onclick="createDeveloperKey()">+ Create B2B Developer Key</button>
                 
                 <h4 style="margin-top: 15px; font-size: 14px;">সক্রিয় B2B কী-সমূহ:</h4>
@@ -138,12 +133,12 @@
             </div>
         </div>
 
-        <!-- ট্যাব ৩: এআই ট্রেনিং ও সিনেমাটোগ্রাফি -->
+        <!-- ট্যাব ৩: এআই ট্রেনিং -->
         <div id="tab-training" class="tab-content" style="display: none;">
             <div class="card">
                 <h3>🧠 ডিরেক্টর ব্রেইন ও সিনেমাটোগ্রাফি</h3>
                 <p style="font-size: 12px; color: #94a3b8; margin-bottom: 10px;">ভিডিও তৈরির মূল নিয়মাবলী (Rules) ও ভাষার নির্দেশনা দিন:</p>
-                <textarea id="training-knowledge" rows="4" placeholder="যেমন: 'সব সময় সিনেমাটিক ড্রোন শট ব্যবহার করবে এবং বাংলা সংলাপ আবেগঘন করবে।'"></textarea>
+                <textarea id="training-knowledge" rows="4" placeholder="যেমন: 'সব সময় সিনেমাটিক ড্রোন শট ব্যবহার করবে এবং সংলাপ বাংলায় রাখবে।'"></textarea>
                 
                 <h4 style="font-size: 14px;">ডিফল্ট ক্যামেরা ও লাইটিং রুলস:</h4>
                 <input type="text" id="camera-rules" placeholder="ক্যামেরা স্টাইল (যেমন: 4k, Drone View, Cinematic Lighting, 60fps)">
@@ -176,8 +171,8 @@
                 <button class="btn-blue" onclick="triggerMemoryPrune()">🧹 Prune 5-Month Inactive Memory</button>
 
                 <h4 style="margin-top: 15px; font-size: 14px;">সিস্টেম ডায়াগনসিস মেসেজ:</h4>
-                <div id="diag-details" style="background: #0f172a; padding: 12px; border-radius: 8px; font-size: 13px; color: #38bdf8;">
-                    সবকিছু স্বাভাবিকভাবে কাজ করছে। কোনো ত্রুটি পাওয়া যায়নি।
+                <div id="diag-details" style="background: #0f172a; padding: 12px; border-radius: 8px; font-size: 13px; color: #ef4444;">
+                    এআই ক্লাউড ইঞ্জিন এখনো সিগন্যাল পাঠায়নি (অফলাইন)।
                 </div>
             </div>
         </div>
@@ -201,7 +196,6 @@
 
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-    // অটো-লগইন হ্যান্ডলার
     auth.onAuthStateChanged(user => {
         document.getElementById("auth-loading").style.display = "none";
         if (user) {
@@ -216,7 +210,6 @@
         }
     });
 
-    // ট্যাব সুইচার
     function switchTab(tabId) {
         document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -261,9 +254,8 @@
         }, 1500);
     }
 
-    // লাইভ ড্যাশবোর্ড সিঙ্ক
+    // লাইভ ড্যাশবোর্ড সিঙ্ক (আসল রিয়েল-টাইম হার্টবিট গার্ড)
     function startDashboardSync() {
-        // ১. হেলথ ও সিগন্যাল লাইট
         db.ref("system_health").on("value", snap => {
             const data = snap.val();
             const light = document.getElementById("signal-light");
@@ -271,32 +263,44 @@
             const msg = document.getElementById("system-msg");
             const diag = document.getElementById("diag-details");
 
-            if (data && data.light === "blue") {
+            // সময় চেক: শেষ সিগন্যাল ৬০ সেকেন্ডের মধ্যে এসেছে কি না
+            let isAlive = false;
+            if (data && data.last_ping) {
+                const lastPingTime = new Date(data.last_ping).getTime();
+                const now = new Date().getTime();
+                // ৬০ সেকেন্ড বা ১ মিনিটের পুরনো হলে অফলাইন ধরবে
+                if ((now - lastPingTime) < 65000) {
+                    isAlive = true;
+                }
+            }
+
+            if (isAlive && data.light === "blue") {
                 light.className = "status-light light-blue";
                 desc.innerText = "System Online";
                 msg.innerText = data.message || "সবকিছু নিখুঁতভাবে চলছে।";
-                diag.innerText = "সব সিস্টেম স্বাভাবিক। ইঞ্জিন প্রস্তুত আছে।";
-            } else if (data && data.light === "yellow") {
+                diag.innerText = "সব সিস্টেম স্বাভাবিক। এআই ইঞ্জিন একটিভ!";
+                diag.style.color = "#10b981";
+            } else if (isAlive && data.light === "yellow") {
                 light.className = "status-light light-yellow";
                 desc.innerText = "High Load";
                 msg.innerText = data.message;
-                diag.innerText = "সতর্কতা: সার্ভারে লোড বেশি বা রেসপন্স টাইম কিছুটা ধীর।";
+                diag.innerText = "সতর্কতা: সার্ভারে লোড বেশি।";
+                diag.style.color = "#eab308";
                 sendPhoneAlert("⚠️ AI Warning", data.message);
             } else {
+                // কোনো সিগন্যাল না থাকলে ১০০% লাল থাকবে
                 light.className = "status-light light-red";
                 desc.innerText = "Disconnected";
-                msg.innerText = "ইঞ্জিন কানেক্টেড নেই। Repair বাটনে চাপ দিন।";
-                diag.innerText = "ত্রুটি: ক্লাউড ওয়ার্কারের সিগন্যাল পাওয়া যাচ্ছে না। রিপেয়ার করুন।";
-                sendPhoneAlert("🚨 AI Engine Alert", "এআই ইঞ্জিন রেসপন্স করছে না!");
+                msg.innerText = "এআই ইঞ্জিন এখনো অফলাইন। ইঞ্জিন চালু করুন।";
+                diag.innerText = "ত্রুটি: ক্লাউড ওয়ার্কার থেকে কোনো সিগন্যাল পাওয়া যাচ্ছে না (অফলাইন)।";
+                diag.style.color = "#ef4444";
             }
         });
 
-        // ২. ইন্টারনাল কী
         db.ref("internal_api_key/current_key").on("value", snap => {
             document.getElementById("current-api-key").innerText = snap.val() || "No Key Active";
         });
 
-        // ৩. ট্রেনিং ডেটা
         db.ref("training_brain").once("value", snap => {
             const val = snap.val();
             if(val) {
@@ -306,7 +310,6 @@
             }
         });
 
-        // ৪. B2B ডেভেলপার কী তালিকা
         db.ref("developer_keys").on("value", snap => {
             const keys = snap.val();
             const container = document.getElementById("dev-keys-list");
@@ -333,7 +336,6 @@
             document.getElementById("stat-clients").innerText = count;
         });
 
-        // ৫. লাইভ ভিডিও কিউ মনিটর
         db.ref("video_queue").limitToLast(10).on("value", snap => {
             const tasks = snap.val();
             const container = document.getElementById("video-feed-list");
@@ -360,7 +362,6 @@
         });
     }
 
-    // ইন্টারনাল কি জেনারেট
     function generateNewApiKey() {
         const newKey = "ai_internal_" + Math.random().toString(36).substring(2, 12) + Date.now().toString(36);
         db.ref("internal_api_key").set({
@@ -369,7 +370,6 @@
         }).then(() => alert("নতুন ইন্টারনাল কি তৈরি ও সিঙ্ক হয়েছে!"));
     }
 
-    // B2B ডেভেলপার কী তৈরি
     function createDeveloperKey() {
         const name = document.getElementById("dev-name").value.trim();
         const credits = parseInt(document.getElementById("dev-credits").value);
@@ -394,7 +394,6 @@
         }
     }
 
-    // ট্রেনিং ডেটা সেভ
     function saveTrainingKnowledge() {
         const rules = document.getElementById("training-knowledge").value;
         const camera = document.getElementById("camera-rules").value;
@@ -405,10 +404,9 @@
             camera: camera,
             negative: negative,
             updated_at: new Date().toISOString()
-        }).then(() => alert("এআই ব্রেইনে নতুন সমস্ত জ্ঞান ও সিনেমাটোগ্রাফি সফলভাবে সেভ হয়েছে!"));
+        }).then(() => alert("এআই ব্রেইনে নতুন সমস্ত জ্ঞান সফলভাবে সেভ হয়েছে!"));
     }
 
-    // সেলফ-রিপেয়ার
     function triggerRepair() {
         db.ref("system_control/command").set({
             action: "RESTART_AND_HEAL",
@@ -419,7 +417,6 @@
         });
     }
 
-    // মেমোরি ক্লিনার
     function triggerMemoryPrune() {
         db.ref("system_control/command").set({
             action: "PRUNE_MEMORY_NOW",
