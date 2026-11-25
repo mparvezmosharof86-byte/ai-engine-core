@@ -14,7 +14,7 @@
         .container { max-width: 550px; margin: auto; padding: 15px; }
         .card { background: #151c2c; border-radius: 16px; padding: 18px; margin-bottom: 16px; border: 1px solid #222f47; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
         h2, h3, h4 { color: #38bdf8; margin-bottom: 10px; }
-        input, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 14px; }
+        input, textarea, select { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 14px; }
         button { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 14px; margin-bottom: 8px; }
         .btn-blue { background: #0284c7; color: #fff; }
         .btn-green { background: #10b981; color: #fff; }
@@ -87,7 +87,7 @@
             <button class="tab-btn" onclick="switchTab('tab-diag')">🛠️ রিপেয়ার ও লগ</button>
         </div>
 
-        <!-- ট্যাব ১: ওভারভিউ (এখন ডিফল্টভাবে ডিসকানেক্টেড লাল বাতি থাকবে) -->
+        <!-- ট্যাব ১: ওভারভিউ -->
         <div id="tab-overview" class="tab-content">
             <div class="card">
                 <div class="status-header">
@@ -95,7 +95,6 @@
                         <h3>ইঞ্জিন হেলথ স্ট্যাটাস</h3>
                         <span id="status-desc" class="badge">Checking Engine...</span>
                     </div>
-                    <!-- ডিফল্টভাবে বাতি লাল (Disconnected) -->
                     <div id="signal-light" class="status-light light-red"></div>
                 </div>
                 <p id="system-msg" style="font-size: 13px; color: #94a3b8; margin-bottom: 12px;">এআই ইঞ্জিন অফলাইন আছে। ক্লাউড ইঞ্জিন কানেক্ট করুন।</p>
@@ -180,10 +179,11 @@
 </div>
 
 <script>
+    // সিঙ্গাপুর সার্ভারের সঠিক লিংক যুক্ত করা হয়েছে
     const firebaseConfig = {
         apiKey: "AIzaSyDezFBOX7S-GIR_PfK1mc23Dmve6LxWyhg",
         authDomain: "ai-engine-admin.firebaseapp.com",
-        databaseURL: "https://ai-engine-admin-default-rtdb.firebaseio.com",
+        databaseURL: "https://ai-engine-admin-default-rtdb.asia-southeast1.firebasedatabase.app",
         projectId: "ai-engine-admin",
         storageBucket: "ai-engine-admin.firebasestorage.app",
         messagingSenderId: "222567137617",
@@ -254,7 +254,7 @@
         }, 1500);
     }
 
-    // লাইভ ড্যাশবোর্ড সিঙ্ক (আসল রিয়েল-টাইম হার্টবিট গার্ড)
+    // সিঙ্গাপুর সার্ভারের সাথে লাইভ ড্যাশবোর্ড সিঙ্ক
     function startDashboardSync() {
         db.ref("system_health").on("value", snap => {
             const data = snap.val();
@@ -263,12 +263,10 @@
             const msg = document.getElementById("system-msg");
             const diag = document.getElementById("diag-details");
 
-            // সময় চেক: শেষ সিগন্যাল ৬০ সেকেন্ডের মধ্যে এসেছে কি না
             let isAlive = false;
             if (data && data.last_ping) {
                 const lastPingTime = new Date(data.last_ping).getTime();
                 const now = new Date().getTime();
-                // ৬০ সেকেন্ড বা ১ মিনিটের পুরনো হলে অফলাইন ধরবে
                 if ((now - lastPingTime) < 65000) {
                     isAlive = true;
                 }
@@ -288,7 +286,6 @@
                 diag.style.color = "#eab308";
                 sendPhoneAlert("⚠️ AI Warning", data.message);
             } else {
-                // কোনো সিগন্যাল না থাকলে ১০০% লাল থাকবে
                 light.className = "status-light light-red";
                 desc.innerText = "Disconnected";
                 msg.innerText = "এআই ইঞ্জিন এখনো অফলাইন। ইঞ্জিন চালু করুন।";
