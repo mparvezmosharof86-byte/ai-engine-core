@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Engine Master Admin</title>
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #0b0f19; color: #fff; padding-bottom: 30px; }
+        .container { max-width: 500px; margin: auto; padding: 20px; }
+        .card { background: #151c2c; border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid #222f47; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+        h2, h3 { margin-bottom: 15px; color: #38bdf8; }
+        input, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 14px; }
+        button { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 15px; }
+        .btn-blue { background: #0284c7; color: #fff; }
+        .btn-green { background: #10b981; color: #fff; }
+        .btn-red { background: #ef4444; color: #fff; }
+        .status-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 15px; border-bottom: 1px solid #222f47; margin-bottom: 15px; }
+        .status-light { width: 16px; height: 16px; border-radius: 50%; display: inline-block; box-shadow: 0 0 12px currentColor; }
+        .light-blue { background: #38bdf8; color: #38bdf8; }
+        .light-yellow { background: #eab308; color: #eab308; }
+        .light-red { background: #ef4444; color: #ef4444; }
+        .badge { background: #1e293b; padding: 4px 10px; border-radius: 20px; font-size: 12px; color: #94a3b8; }
+        /* Handshake Overlay */
+        #handshake-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0b0f19; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
+        .checkmark { width: 80px; height: 80px; border-radius: 50%; display: block; stroke-width: 4; stroke: #38bdf8; stroke-miterlimit: 10; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- ১. লগইন স্ক্রিন -->
+    <div id="login-section" class="card" style="margin-top: 50px;">
+        <h2>🔐 Admin Panel Access</h2>
+        <p style="color: #94a3b8; margin-bottom: 15px;">আপনার অ্যাডমিন ক্রিডেনশিয়াল দিয়ে প্রবেশ করুন</p>
+        <input type="email" id="login-email" placeholder="Admin Email">
+        <input type="password" id="login-password" placeholder="Admin Password">
+        <button class="btn-blue" onclick="adminLogin()">প্রবেশ করুন (Secure Login)</button>
+    </div>
+
+    <!-- ২. হ্যান্ডশেক স্ক্রিন (লগইনের পর ব্লু টিক আসবে) -->
+    <div id="handshake-overlay">
+        <svg class="checkmark" viewBox="0 0 52 52">
+            <circle cx="26" cy="26" r="25" fill="none" stroke="#38bdf8" stroke-width="4"/>
+            <path fill="none" stroke="#38bdf8" stroke-width="5" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+        </svg>
+        <h3 id="handshake-text" style="color: #38bdf8;">সার্ভার কানেকশন যাচাই হচ্ছে...</h3>
+        <p id="handshake-sub" style="color: #94a3b8; font-size: 13px;">সব সিস্টেম অ্যাক্টিভ হচ্ছে</p>
+    </div>
+
+    <!-- ৩. মূল ড্যাশবোর্ড -->
+    <div id="dashboard-section" style="display: none;">
+        <!-- স্ট্যাটাস বার -->
+        <div class="card">
+            <div class="status-header">
+                <div>
+                    <h3>AI Master Engine</h3>
+                    <span id="status-desc" class="badge">Checking health...</span>
+                </div>
+                <div id="signal-light" class="status-light light-blue"></div>
+            </div>
+            <p id="system-msg" style="font-size: 13px; color: #94a3b8;">ইঞ্জিন সক্রিয় আছে এবং কমান্ডের অপেক্ষায় আছে।</p>
+        </div>
+
+        <!-- এপিআই কি জেনারেশন ও মেমোরি রিফ্রেশ -->
+        <div class="card">
+            <h3>⚡ API Connection & Key Rotation</h3>
+            <p style="font-size: 13px; color: #94a3b8; margin-bottom: 12px;">নতুন কি তৈরি করলে ইউজার অ্যাপে কানেকশন আপডেট হবে এবং পুরনো ডেটা অপ্টিমাইজ হবে।</p>
+            <div style="background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-family: monospace; color: #38bdf8; word-break: break-all;" id="current-api-key">Loading key...</div>
+            <button class="btn-green" onclick="generateNewApiKey()">Generate New API Key (Auto-Sync)</button>
+        </div>
+
+        <!-- এআই ট্রেনিং প্যানেল -->
+        <div class="card">
+            <h3>🧠 এআই ট্রেনিং গ্রাউন্ড (Training Panel)</h3>
+            <p style="font-size: 13px; color: #94a3b8; margin-bottom: 10px;">এআই-কে নতুন ভাষা বা ডিরেকশন শেখাতে এখানে নতুন নিয়ম/প্রম্পট যুক্ত করুন:</p>
+            <textarea id="training-knowledge" rows="5" placeholder="যেমন: 'সব সময় সিনেমাটিক ড্রোন শট ব্যবহার করবে এবং সংলাপ বাংলায় রূপান্তর করবে।'"></textarea>
+            <button class="btn-blue" onclick="saveTrainingKnowledge()">Save & Train Engine</button>
+        </div>
+
+        <!-- অটো-রিপেয়ার ও ডায়াগনসিস -->
+        <div class="card">
+            <h3>🛠️ সেলফ-রিপেয়ার ও ডায়াগনসিস</h3>
+            <p style="font-size: 13px; color: #94a3b8; margin-bottom: 12px;">কোনো সমস্যা দেখা দিলে এক ক্লিকে সিস্টেম স্বয়ংক্রিয়ভাবে ঠিক করুন:</p>
+            <button class="btn-red" onclick="triggerRepair()">Repair & Restart Engine (১ ক্লিকে সমাধান)</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // -------------------------------------------------------------
+    // এখানে তোমার ফায়ারবেসের তথ্যগুলো বসাও (যা নোটপ্যাডে রেখেছিলে)
+    // -------------------------------------------------------------
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_AUTH_DOMAIN",
+        databaseURL: "YOUR_DATABASE_URL",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    // অ্যাডমিন লগইন ফাংশন
+    function adminLogin() {
+        const email = document.getElementById("login-email").value;
+        const pass = document.getElementById("login-password").value;
+        
+        auth.signInWithEmailAndPassword(email, pass)
+            .then(() => { runHandshake(); })
+            .catch(err => alert("লগইন ভুল হয়েছে: " + err.message));
+    }
+
+    // হ্যান্ডশেক ও ব্লু টিক এনিমেশন
+    function runHandshake() {
+        document.getElementById("login-section").style.display = "none";
+        const overlay = document.getElementById("handshake-overlay");
+        overlay.style.display = "flex";
+
+        setTimeout(() => {
+            document.getElementById("handshake-text").innerText = "এআই সিস্টেম অ্যাক্টিভ!";
+            document.getElementById("handshake-sub").innerText = "ড্যাশবোর্ড ওপেন হচ্ছে...";
+            setTimeout(() => {
+                overlay.style.display = "none";
+                document.getElementById("dashboard-section").style.display = "block";
+                startDashboardSync();
+            }, 1200);
+        }, 1500);
+    }
+
+    // ড্যাশবোর্ড সিঙ্ক
+    function startDashboardSync() {
+        // হেলথ সিগন্যাল লাইট মনিটরিং
+        db.ref("system_health").on("value", snap => {
+            const data = snap.val();
+            const light = document.getElementById("signal-light");
+            const desc = document.getElementById("status-desc");
+            const msg = document.getElementById("system-msg");
+
+            if (data && data.light === "blue") {
+                light.className = "status-light light-blue";
+                desc.innerText = "System Online";
+                msg.innerText = data.message || "সবকিছু নিখুঁতভাবে চলছে।";
+            } else if (data && data.light === "yellow") {
+                light.className = "status-light light-yellow";
+                desc.innerText = "Warning / High Load";
+                msg.innerText = data.message;
+            } else {
+                light.className = "status-light light-red";
+                desc.innerText = "Disconnected";
+                msg.innerText = "ইঞ্জিন রেসপন্স করছে না। Repair বাটনে চাপ দিন।";
+            }
+        });
+
+        // বর্তমান API Key শো করা
+        db.ref("internal_api_key/current_key").on("value", snap => {
+            document.getElementById("current-api-key").innerText = snap.val() || "No Active Key";
+        });
+
+        // বর্তমান ট্রেনিং ডেটা লোড করা
+        db.ref("training_brain/rules").once("value", snap => {
+            if(snap.val()) document.getElementById("training-knowledge").value = snap.val();
+        });
+    }
+
+    // নতুন API Key জেনারেশন (Auto-Sync)
+    function generateNewApiKey() {
+        const newKey = "ai_live_" + Math.random().toString(36).substring(2, 12) + Date.now().toString(36);
+        db.ref("internal_api_key").set({
+            current_key: newKey,
+            generated_at: new Date().toISOString()
+        }).then(() => alert("নতুন এপিআই কি জেনারেট হয়েছে এবং ইউজার অ্যাপে অটো-সিঙ্ক হয়েছে!"));
+    }
+
+    // ট্রেনিং ডেটা সেভ করা
+    function saveTrainingKnowledge() {
+        const rules = document.getElementById("training-knowledge").value;
+        db.ref("training_brain").update({
+            rules: rules,
+            updated_at: new Date().toISOString()
+        }).then(() => alert("এআই ব্রেইনে নতুন জ্ঞান সফলভাবে সেভ হয়েছে!"));
+    }
+
+    // সেলফ-রিপেয়ার ট্রিগার
+    function triggerRepair() {
+        db.ref("system_control/command").set({
+            action: "RESTART_AND_HEAL",
+            timestamp: new Date().toISOString()
+        }).then(() => {
+            alert("সিস্টেম রিস্টার্ট সিগন্যাল পাঠানো হয়েছে!");
+            runHandshake();
+        });
+    }
+</script>
+</body>
+</html>
