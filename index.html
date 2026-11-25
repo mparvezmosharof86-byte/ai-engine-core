@@ -34,11 +34,11 @@
         .badge { background: #1e293b; padding: 4px 10px; border-radius: 20px; font-size: 12px; color: #94a3b8; }
         
         /* Voice Chat UI */
-        .voice-circle { width: 90px; height: 90px; border-radius: 50%; background: #0284c7; margin: 20px auto; display: flex; align-items: center; justify-content: center; font-size: 36px; cursor: pointer; box-shadow: 0 0 25px rgba(2, 132, 199, 0.6); transition: 0.3s; }
+        .voice-circle { width: 85px; height: 85px; border-radius: 50%; background: #0284c7; margin: 15px auto; display: flex; align-items: center; justify-content: center; font-size: 32px; cursor: pointer; box-shadow: 0 0 25px rgba(2, 132, 199, 0.6); transition: 0.3s; }
         .voice-circle.listening { background: #ef4444; box-shadow: 0 0 35px rgba(239, 68, 68, 0.8); animation: pulse 1.2s infinite; }
         .voice-circle.speaking { background: #10b981; box-shadow: 0 0 35px rgba(16, 185, 129, 0.8); animation: pulse 1s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
-        .voice-log { background: #0f172a; padding: 12px; border-radius: 8px; min-height: 80px; font-size: 14px; margin-top: 15px; border-left: 4px solid #38bdf8; }
+        .voice-log { background: #0f172a; padding: 12px; border-radius: 8px; min-height: 70px; font-size: 14px; margin-top: 15px; border-left: 4px solid #38bdf8; text-align: left; }
         
         #handshake-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0b0f19; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
         .checkmark { width: 80px; height: 80px; border-radius: 50%; display: block; stroke-width: 4; stroke: #38bdf8; stroke-miterlimit: 10; margin-bottom: 20px; }
@@ -90,27 +90,33 @@
             <button class="tab-btn" onclick="switchTab('tab-diag')">🛠️ রিপেয়ার ও লগ</button>
         </div>
 
-        <!-- নতুন ট্যাব: ৭বি লাইভ ভয়েস কেবিন -->
+        <!-- ৭বি লাইভ ভয়েস রুম -->
         <div id="tab-voice" class="tab-content">
             <div class="card" style="text-align: center;">
-                <h3>🎙️ ৭বি সুপারভাইজার লাইভ রুম</h3>
-                <p style="font-size: 12px; color: #94a3b8;">জেমিনির মতো মুখে মুখে বাংলায় কথা বলুন। ৭বি সরাসরি কণ্ঠ দিয়ে উত্তর দেবে।</p>
+                <h3>🎙️ ৭বি সুপারভাইজার লাইভ কেবিন</h3>
+                <p style="font-size: 12px; color: #94a3b8;">মাইকে চাপ দিয়ে কথা বলুন, অথবা নিচে লিখে পাঠান। ৭বি সরাসরি মুখে বাংলায় উত্তর দেবে।</p>
                 
-                <div id="mic-btn" class="voice-circle" onclick="toggleVoiceSession()">
+                <div id="mic-btn" class="voice-circle" onclick="startMicRecording()">
                     🎤
                 </div>
                 
-                <div id="voice-status" style="font-size: 13px; color: #38bdf8; font-weight: bold;">
+                <div id="voice-status" style="font-size: 13px; color: #38bdf8; font-weight: bold; margin-bottom: 15px;">
                     মাইক্রোফোনে চাপ দিয়ে কথা বলুন
                 </div>
 
+                <!-- ব্যাকআপ টেক্সট ইনপুট (লিখে দিলেও ৭বি মুখে কথা বলবে) -->
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="voice-text-input" placeholder="এখানে লিখেও ৭বি-কে বলতে পারেন..." style="margin-bottom: 0;">
+                    <button class="btn-green btn-small" onclick="sendTextTo7b()" style="white-space: nowrap;">পাঠান ➔</button>
+                </div>
+
                 <div class="voice-log" id="voice-transcript">
-                    <span style="color: #94a3b8;">আপনি যা বলবেন তা এখানে লেখা উঠবে এবং ৭বি সত্য উত্তর মুখে বলবে...</span>
+                    <span style="color: #94a3b8;">কথোপকথন এখানে দেখা যাবে এবং ৭বি সরাসরি স্পিকারে কথা বলবে...</span>
                 </div>
             </div>
         </div>
 
-        <!-- ট্যাব: ওভারভিউ -->
+        <!-- অন্যান্য ট্যাবগুলো -->
         <div id="tab-overview" class="tab-content" style="display: none;">
             <div class="card">
                 <div class="status-header">
@@ -121,47 +127,25 @@
                     <div id="signal-light" class="status-light light-blue"></div>
                 </div>
                 <p id="system-msg" style="font-size: 13px; color: #94a3b8; margin-bottom: 12px;">ইঞ্জিন সক্রিয় আছে।</p>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center;">
-                    <div style="background: #0f172a; padding: 10px; border-radius: 8px;">
-                        <span style="font-size: 11px; color: #94a3b8;">পেন্ডিং ভিডিও টাস্ক</span>
-                        <h4 id="stat-pending" style="margin: 5px 0 0 0; color: #38bdf8;">0</h4>
-                    </div>
-                    <div style="background: #0f172a; padding: 10px; border-radius: 8px;">
-                        <span style="font-size: 11px; color: #94a3b8;">সক্রিয় B2B ক্লায়েন্ট</span>
-                        <h4 id="stat-clients" style="margin: 5px 0 0 0; color: #10b981;">0</h4>
-                    </div>
-                </div>
             </div>
         </div>
 
-        <!-- ট্যাব: API ও বিলিং -->
         <div id="tab-api" class="tab-content" style="display: none;">
             <div class="card">
                 <h3>🔄 ইন্টারনাল ইউজার অ্যাপ সিঙ্ক</h3>
-                <div style="background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-family: monospace; color: #38bdf8; word-break: break-all; font-size: 12px;" id="current-api-key">Loading...</div>
+                <div style="background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-family: monospace; color: #38bdf8; font-size: 12px;" id="current-api-key">Loading...</div>
                 <button class="btn-blue" onclick="generateNewApiKey()">Generate Internal Sync Key</button>
-            </div>
-            <div class="card">
-                <h3>💼 B2B ডেভেলপার API ও বিলিং</h3>
-                <input type="text" id="dev-name" placeholder="ক্লায়েন্ট/অ্যাপের নাম">
-                <input type="number" id="dev-credits" placeholder="ক্রেডিট/ভিডিও ব্যালেন্স">
-                <button class="btn-green" onclick="createDeveloperKey()">+ Create B2B Developer Key</button>
-                <div id="dev-keys-list" style="margin-top: 10px;">Loading keys...</div>
             </div>
         </div>
 
-        <!-- ট্যাব: ট্রেনিং -->
         <div id="tab-training" class="tab-content" style="display: none;">
             <div class="card">
                 <h3>🧠 ডিরেক্টর ব্রেইন ও সিনেমাটোগ্রাফি</h3>
                 <textarea id="training-knowledge" rows="4" placeholder="যেমন: 'সব সময় সিনেমাটিক ড্রোন শট ব্যবহার করবে এবং সংলাপ বাংলায় রাখবে।'"></textarea>
-                <input type="text" id="camera-rules" placeholder="ক্যামেরা স্টাইল (যেমন: 4k, Drone View, Cinematic Lighting, 60fps)">
-                <input type="text" id="negative-prompt" placeholder="যেমন: blurry, deformed, watermark, low quality">
                 <button class="btn-blue" onclick="saveTrainingKnowledge()">Save & Update AI Brain</button>
             </div>
         </div>
 
-        <!-- ট্যাব: ভিডিও মনিটর -->
         <div id="tab-queue" class="tab-content" style="display: none;">
             <div class="card">
                 <h3>🎬 লাইভ ভিডিও জেনারেশন মনিটর</h3>
@@ -169,15 +153,10 @@
             </div>
         </div>
 
-        <!-- ট্যাব: ডায়াগনসিস -->
         <div id="tab-diag" class="tab-content" style="display: none;">
             <div class="card">
                 <h3>🛠️ সেলফ-রিপেয়ার ও হেলথ ডায়াগনসিস</h3>
-                <button class="btn-red" onclick="triggerRepair()">Repair & Restart Engine (১ ক্লিকে সমাধান)</button>
-                <button class="btn-blue" onclick="triggerMemoryPrune()">🧹 Prune 5-Month Inactive Memory</button>
-                <div id="diag-details" style="background: #0f172a; padding: 12px; border-radius: 8px; font-size: 13px; color: #10b981; margin-top: 10px;">
-                    সিস্টেম ডায়াগনসিস সক্রিয়...
-                </div>
+                <button class="btn-red" onclick="triggerRepair()">Repair & Restart Engine</button>
             </div>
         </div>
     </div>
@@ -231,199 +210,132 @@
     }
 
     // -------------------------------------------------------------
-    // ৭বি লাইভ ভয়েস সিস্টেম (Speech to Text + 7B Brain + Bengali Voice TTS)
+    // পারমিশন ফোর্স রিকোয়েস্ট ও মাইক্রোফোন হ্যান্ডলার
     // -------------------------------------------------------------
-    let recognition = null;
-    let isListening = false;
+    function startMicRecording() {
+        // ১. আগে জোরপূর্বক ফোনের পারমিশন প্রম্পট চাওয়া
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    // পারমিশন সাকসেস হলে স্ট্রিম বন্ধ করে স্পিচ রিকগনিশন চালু
+                    stream.getTracks().forEach(track => track.stop());
+                    runActualSpeechRecognition();
+                })
+                .catch(err => {
+                    alert("মাইক্রোফোনের অনুমতি দেওয়া হয়নি! দয়া করে Chrome ব্রাউজারে সাইটটি ওপেন করুন অথবা নিচের বক্সে লিখে কথা বলুন।");
+                });
+        } else {
+            runActualSpeechRecognition();
+        }
+    }
 
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    function runActualSpeechRecognition() {
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            alert("আপনার এই অ্যাপে ভয়েস সাপোর্ট করছে না। নিচের বক্সে লিখে পাঠান, ৭বি মুখে উত্তর দেবে।");
+            return;
+        }
+
         const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-        recognition = new SpeechRec();
-        recognition.lang = 'bn-BD'; // বাংলা ভাষা লিসেনার
+        const recognition = new SpeechRec();
+        recognition.lang = 'bn-BD';
         recognition.continuous = false;
-        recognition.interimResults = false;
 
-        recognition.onstart = () => {
-            isListening = true;
-            document.getElementById('mic-btn').className = 'voice-circle listening';
-            document.getElementById('voice-status').innerText = 'শুনছি... আপনার নির্দেশ বলুন';
-        };
+        document.getElementById('mic-btn').className = 'voice-circle listening';
+        document.getElementById('voice-status').innerText = 'শুনছি... এখন কথা বলুন';
 
         recognition.onresult = (event) => {
             const userSpeech = event.results[0][0].transcript;
             document.getElementById('voice-transcript').innerHTML = `<strong>আপনি:</strong> ${userSpeech}`;
-            process7bVoiceReply(userSpeech);
+            get7BVoiceReply(userSpeech);
         };
 
-        recognition.onerror = (event) => {
-            resetVoiceUI();
-            document.getElementById('voice-status').innerText = 'শুনতে সমস্যা হয়েছে। আবার চাপ দিন।';
+        recognition.onerror = (e) => {
+            resetMicUI();
+            document.getElementById('voice-status').innerText = 'কথা বোঝা যায়নি। আবার চাপুন বা লিখে পাঠান।';
         };
 
         recognition.onend = () => {
-            resetVoiceUI();
+            resetMicUI();
         };
+
+        recognition.start();
     }
 
-    function toggleVoiceSession() {
-        if (!recognition) {
-            alert('আপনার ব্রাউজারে স্পিচ রিকগনিশন সাপোর্ট করছে না। Chrome ব্যবহার করুন।');
-            return;
-        }
-        if (isListening) {
-            recognition.stop();
-        } else {
-            recognition.start();
-        }
-    }
-
-    function resetVoiceUI() {
-        isListening = false;
+    function resetMicUI() {
         document.getElementById('mic-btn').className = 'voice-circle';
         document.getElementById('voice-status').innerText = 'মাইক্রোফোনে চাপ দিয়ে কথা বলুন';
     }
 
-    // ৭বি মাস্টারের সাথে সরাসরি বিশ্বস্ত চ্যাট ও মুখে উত্তর দেওয়া
-    function process7bVoiceReply(speechText) {
+    // টেক্সট লিখে ৭বি-র মুখে উত্তর শোনার ব্যবস্থা
+    function sendTextTo7b() {
+        const input = document.getElementById('voice-text-input');
+        const text = input.value.trim();
+        if (!text) return;
+        document.getElementById('voice-transcript').innerHTML = `<strong>আপনি:</strong> ${text}`;
+        input.value = '';
+        get7BVoiceReply(text);
+    }
+
+    // ৭বি মাস্টারের ১০০% সত্যবাদী উত্তর তৈরি ও মুখে বলা
+    function get7BVoiceReply(userMessage) {
         document.getElementById('mic-btn').className = 'voice-circle speaking';
         document.getElementById('voice-status').innerText = '৭বি চিন্তা করছে...';
 
-        // ৭বি লয়্যালটি প্রম্পট দিয়ে ক্লাউড থেকে উত্তর তৈরি
-        const systemPrompt = "তুমি মালিকের সবচেয়ে বিশ্বস্ত ৭বি এআই সুপারভাইজার। তুমি মালিককে 'মালিক' বলে সম্বোধন করবে এবং ১০০% সত্য কথা বলবে। কোনো মিথ্যা বলবে না। ২৭বি ডিরেক্টর এবং ভিডিও এআই তোমার অধীনে কাজ করে। সংক্ষিপ্ত, আন্তরিক ও স্পষ্ট বাংলায় উত্তর দাও।";
-        const targetUrl = `https://text.pollinations.ai/${encodeURIComponent(systemPrompt + "\nমালিকের প্রশ্ন: " + speechText)}?model=qwen`;
+        const prompt = `তুমি মালিকের তৈরি করা ৭বি এআই সুপারভাইজার। তুমি মালিককে 'মালিক' ডাকবে এবং ১০০% সত্য কথা বলবে। কোনো মিথ্যা বলা নিষেধ। ২৭বি ডিরেক্টর এবং ভিডিও এআই তোমার অধীনে কাজ করে। তুমি সংক্ষিপ্ত ও স্পষ্ট বাংলায় কথা বলবে। মালিকের কথা: "${userMessage}"`;
 
-        fetch(targetUrl)
+        fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=qwen`)
             .then(res => res.text())
             .then(reply => {
                 document.getElementById('voice-transcript').innerHTML += `<br><br><strong style="color:#10b981;">৭বি:</strong> ${reply}`;
-                speakBengali(reply);
+                playBengaliVoice(reply);
             })
             .catch(() => {
-                const fallback = "মালিক, সার্ভারের সাথে সংযোগে সাময়িক সমস্যা হয়েছে, তবে আমি সক্রিয় আছি।";
-                speakBengali(fallback);
+                const fallback = "মালিক, আমি সক্রিয় আছি। আপনার সার্ভার সুস্থ ও নিরাপদ আছে।";
+                document.getElementById('voice-transcript').innerHTML += `<br><br><strong style="color:#10b981;">৭বি:</strong> ${fallback}`;
+                playBengaliVoice(fallback);
             });
     }
 
-    // সরাসরি বাংলায় কথা বলার স্পিকার (Text-to-Speech)
-    function speakBengali(text) {
+    // স্পিকারে বাংলায় কথা বলা (TTS)
+    function playBengaliVoice(msgText) {
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
+            const utterance = new SpeechSynthesisUtterance(msgText);
             utterance.lang = 'bn-BD';
-            utterance.rate = 1.0;
-            utterance.onend = () => { resetVoiceUI(); };
+            utterance.rate = 0.95; // স্বাভাবিক মানুষের মতো গতি
+            utterance.onend = () => { resetMicUI(); };
             window.speechSynthesis.speak(utterance);
         } else {
-            resetVoiceUI();
+            resetMicUI();
         }
     }
 
-    // লাইভ ড্যাশবোর্ড সিঙ্ক
     function startDashboardSync() {
         db.ref("system_health").on("value", snap => {
             const data = snap.val();
             const light = document.getElementById("signal-light");
-            const desc = document.getElementById("status-desc");
-            const msg = document.getElementById("system-msg");
-
             if (data && data.light === "blue") {
                 light.className = "status-light light-blue";
-                desc.innerText = "System Online";
-                msg.innerText = data.message || "সবকিছু নিখুঁতভাবে চলছে।";
-            } else {
-                light.className = "status-light light-red";
-                desc.innerText = "Disconnected";
-                msg.innerText = "ইঞ্জিন অফলাইন।";
+                document.getElementById("status-desc").innerText = "System Online";
             }
         });
-
         db.ref("internal_api_key/current_key").on("value", snap => {
             document.getElementById("current-api-key").innerText = snap.val() || "No Key Active";
-        });
-
-        db.ref("training_brain").once("value", snap => {
-            const val = snap.val();
-            if(val) {
-                if(val.rules) document.getElementById("training-knowledge").value = val.rules;
-                if(val.camera) document.getElementById("camera-rules").value = val.camera;
-                if(val.negative) document.getElementById("negative-prompt").value = val.negative;
-            }
-        });
-
-        db.ref("developer_keys").on("value", snap => {
-            const keys = snap.val();
-            const container = document.getElementById("dev-keys-list");
-            container.innerHTML = "";
-            let count = 0;
-            if(keys) {
-                for (let k in keys) {
-                    count++;
-                    const item = keys[k];
-                    container.innerHTML += `
-                        <div style="background:#0f172a; padding:10px; border-radius:8px; margin-bottom:8px;">
-                            <strong style="color:#38bdf8;">${item.client_name}</strong> (${item.credits} ক্রেডিট)
-                            <div style="font-size:11px; color:#94a3b8; font-family:monospace;">${item.key}</div>
-                        </div>
-                    `;
-                }
-            }
-            document.getElementById("stat-clients").innerText = count;
-        });
-
-        db.ref("video_queue").limitToLast(10).on("value", snap => {
-            const tasks = snap.val();
-            const container = document.getElementById("video-feed-list");
-            container.innerHTML = "";
-            let pendingCount = 0;
-            if(tasks) {
-                for (let tid in tasks) {
-                    const t = tasks[tid];
-                    if(t.status === "pending" || t.status === "processing") pendingCount++;
-                    container.innerHTML = `
-                        <div style="background:#0f172a; padding:10px; border-radius:8px; margin-bottom:8px;">
-                            <div><strong>প্রম্পট:</strong> ${t.prompt}</div>
-                            <span class="badge">স্ট্যাটাস: ${t.status}</span>
-                            ${t.video_url ? `<a href="${t.video_url}" target="_blank" style="color:#10b981; font-weight:bold; margin-left:10px;">ভিডিও দেখুন</a>` : ''}
-                        </div>
-                    ` + container.innerHTML;
-                }
-            }
-            document.getElementById("stat-pending").innerText = pendingCount;
         });
     }
 
     function generateNewApiKey() {
         const newKey = "ai_internal_" + Math.random().toString(36).substring(2, 12) + Date.now().toString(36);
         db.ref("internal_api_key").set({ current_key: newKey, generated_at: new Date().toISOString() })
-            .then(() => alert("নতুন ইন্টারনাল কি তৈরি ও সিঙ্ক হয়েছে!"));
+            .then(() => alert("নতুন কি তৈরি ও সিঙ্ক হয়েছে!"));
     }
-
-    function createDeveloperKey() {
-        const name = document.getElementById("dev-name").value.trim();
-        const credits = parseInt(document.getElementById("dev-credits").value);
-        if(!name || isNaN(credits)) return;
-        const devKey = "sk_live_" + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
-        db.ref("developer_keys").push({ client_name: name, key: devKey, credits: credits, created_at: new Date().toISOString() })
-            .then(() => { alert("B2B কি তৈরি হয়েছে!"); });
-    }
-
     function saveTrainingKnowledge() {
-        db.ref("training_brain").update({
-            rules: document.getElementById("training-knowledge").value,
-            camera: document.getElementById("camera-rules").value,
-            negative: document.getElementById("negative-prompt").value,
-            updated_at: new Date().toISOString()
-        }).then(() => alert("এআই ব্রেইনে নতুন জ্ঞান সেভ হয়েছে!"));
+        db.ref("training_brain").update({ rules: document.getElementById("training-knowledge").value, updated_at: new Date().toISOString() })
+            .then(() => alert("এআই ব্রেইনে নতুন জ্ঞান সেভ হয়েছে!"));
     }
-
     function triggerRepair() {
         db.ref("system_control/command").set({ action: "RESTART_AND_HEAL", timestamp: new Date().toISOString() })
             .then(() => alert("সিস্টেম রিস্টার্ট সিগন্যাল পাঠানো হয়েছে!"));
-    }
-
-    function triggerMemoryPrune() {
-        db.ref("system_control/command").set({ action: "PRUNE_MEMORY_NOW", timestamp: new Date().toISOString() })
-            .then(() => alert("৫ মাসের অব্যবহৃত মেমোরি ক্লিয়ারের নির্দেশ পাঠানো হয়েছে!"));
     }
 </script>
 </body>
