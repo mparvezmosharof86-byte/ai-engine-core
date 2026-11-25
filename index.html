@@ -19,6 +19,7 @@
         .btn-blue { background: #0284c7; color: #fff; }
         .btn-green { background: #10b981; color: #fff; }
         .btn-red { background: #ef4444; color: #fff; }
+        .btn-small-red { background: #ef4444; color: #fff; padding: 6px 12px; font-size: 12px; border-radius: 6px; width: auto; cursor: pointer; }
         .status-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 15px; border-bottom: 1px solid #222f47; margin-bottom: 15px; }
         .status-light { width: 16px; height: 16px; border-radius: 50%; display: inline-block; box-shadow: 0 0 12px currentColor; }
         .light-blue { background: #38bdf8; color: #38bdf8; }
@@ -27,13 +28,19 @@
         .badge { background: #1e293b; padding: 4px 10px; border-radius: 20px; font-size: 12px; color: #94a3b8; }
         #handshake-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0b0f19; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
         .checkmark { width: 80px; height: 80px; border-radius: 50%; display: block; stroke-width: 4; stroke: #38bdf8; stroke-miterlimit: 10; margin-bottom: 20px; }
+        #auth-loading { text-align: center; margin-top: 100px; color: #38bdf8; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <!-- চেক হচ্ছে ইউজার অলরেডি লগইন আছে কি না -->
+    <div id="auth-loading">
+        <h3>অ্যাডমিন সেশন লোড হচ্ছে...</h3>
+    </div>
+
     <!-- ১. লগইন স্ক্রিন -->
-    <div id="login-section" class="card" style="margin-top: 50px;">
+    <div id="login-section" class="card" style="margin-top: 50px; display: none;">
         <h2>🔐 Admin Panel Access</h2>
         <p style="color: #94a3b8; margin-bottom: 15px;">আপনার অ্যাডমিন ক্রিডেনশিয়াল দিয়ে প্রবেশ করুন</p>
         <input type="email" id="login-email" placeholder="Admin Email">
@@ -41,7 +48,7 @@
         <button class="btn-blue" onclick="adminLogin()">প্রবেশ করুন (Secure Login)</button>
     </div>
 
-    <!-- ২. হ্যান্ডশেক স্ক্রিন (লগইনের পর ব্লু টিক আসবে) -->
+    <!-- ২. হ্যান্ডশেক স্ক্রিন (ব্লু টিক) -->
     <div id="handshake-overlay">
         <svg class="checkmark" viewBox="0 0 52 52">
             <circle cx="26" cy="26" r="25" fill="none" stroke="#38bdf8" stroke-width="4"/>
@@ -53,6 +60,12 @@
 
     <!-- ৩. মূল ড্যাশবোর্ড -->
     <div id="dashboard-section" style="display: none;">
+        <!-- টপ বার ও লগআউট বাটন -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <span style="font-size: 13px; color: #94a3b8;" id="user-display">Admin Active</span>
+            <button class="btn-small-red" onclick="adminLogout()">🚪 লগআউট</button>
+        </div>
+
         <!-- স্ট্যাটাস বার -->
         <div class="card">
             <div class="status-header">
@@ -91,7 +104,6 @@
 </div>
 
 <script>
-    // তোমার দেওয়া আসল ফায়ারবেস কনফিগারেশন যুক্ত করা হয়েছে
     const firebaseConfig = {
         apiKey: "AIzaSyDezFBOX7S-GIR_PfK1mc23Dmve6LxWyhg",
         authDomain: "ai-engine-admin.firebaseapp.com",
@@ -106,6 +118,42 @@
     const auth = firebase.auth();
     const db = firebase.database();
 
+    // পারসিস্টেন্স সেট করা (লগইন যেন মেমোরিতে আজীবন সেভ থাকে)
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+    // অটো-লগইন চেকার (রিফ্রেশ করলেও লগইন থাকবে)
+    auth.onAuthStateChanged(user => {
+        document.getElementById("auth-loading").style.display = "none";
+        if (user) {
+            document.getElementById("user-display").innerText = "Admin: " + user.email;
+            document.getElementById("login-section").style.display = "none";
+            document.getElementById("dashboard-section").style.display = "block";
+            startDashboardSync();
+            requestNotificationAccess();
+        } else {
+            document.getElementById("login-section").style.display = "block";
+            document.getElementById("dashboard-section").style.display = "none";
+        }
+    });
+
+    // নোটিফিকেশন পারমিশন রিকোয়েস্ট
+    function requestNotificationAccess() {
+        if ("Notification" in window && Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+    }
+
+    // মোবাইলে অ্যালার্ট নোটিফিকেশন পাঠানো
+    function sendPhoneAlert(title, message) {
+        if ("Notification" in window && Notification.permission === "granted") {
+            new Notification(title, {
+                body: message,
+                icon: "https://cdn-icons-png.flaticon.com/512/1053/1053244.png"
+            });
+        }
+    }
+
+    // অ্যাডমিন লগইন
     function adminLogin() {
         const email = document.getElementById("login-email").value;
         const pass = document.getElementById("login-password").value;
@@ -115,6 +163,16 @@
             .catch(err => alert("লগইন ভুল হয়েছে: " + err.message));
     }
 
+    // অ্যাডমিন লগআউট (ব্যাকএন্ড কিন্তু বন্ধ হবে না)
+    function adminLogout() {
+        if (confirm("আপনি কি অ্যাডমিন প্যানেল থেকে বের হতে চান? (ব্যাকএন্ড ইঞ্জিন চালু থাকবে)")) {
+            auth.signOut().then(() => {
+                alert("সফলভাবে লগআউট হয়েছে!");
+            });
+        }
+    }
+
+    // হ্যান্ডশেক ও ব্লু টিক এনিমেশন
     function runHandshake() {
         document.getElementById("login-section").style.display = "none";
         const overlay = document.getElementById("handshake-overlay");
@@ -131,6 +189,9 @@
         }, 1500);
     }
 
+    let lastLightState = "blue";
+
+    // ড্যাশবোর্ড লাইভ সিঙ্ক
     function startDashboardSync() {
         db.ref("system_health").on("value", snap => {
             const data = snap.val();
@@ -146,11 +207,18 @@
                 light.className = "status-light light-yellow";
                 desc.innerText = "Warning / High Load";
                 msg.innerText = data.message;
+                if (lastLightState !== "yellow") {
+                    sendPhoneAlert("⚠️ AI Warning", data.message);
+                }
             } else {
                 light.className = "status-light light-red";
                 desc.innerText = "Disconnected";
                 msg.innerText = "ইঞ্জিন রেসপন্স করছে না। Repair বাটনে চাপ দিন।";
+                if (lastLightState !== "red") {
+                    sendPhoneAlert("🚨 AI Engine Alert", "এআই ইঞ্জিন রেসপন্স করছে না! রিপেয়ার করুন।");
+                }
             }
+            if(data && data.light) lastLightState = data.light;
         });
 
         db.ref("internal_api_key/current_key").on("value", snap => {
@@ -162,6 +230,7 @@
         });
     }
 
+    // নতুন API Key জেনারেশন
     function generateNewApiKey() {
         const newKey = "ai_live_" + Math.random().toString(36).substring(2, 12) + Date.now().toString(36);
         db.ref("internal_api_key").set({
@@ -170,6 +239,7 @@
         }).then(() => alert("নতুন এপিআই কি জেনারেট হয়েছে এবং ইউজার অ্যাপে অটো-সিঙ্ক হয়েছে!"));
     }
 
+    // ট্রেনিং ডেটা সেভ
     function saveTrainingKnowledge() {
         const rules = document.getElementById("training-knowledge").value;
         db.ref("training_brain").update({
@@ -178,6 +248,7 @@
         }).then(() => alert("এআই ব্রেইনে নতুন জ্ঞান সফলভাবে সেভ হয়েছে!"));
     }
 
+    // সেলফ-রিপেয়ার ট্রিগার
     function triggerRepair() {
         db.ref("system_control/command").set({
             action: "RESTART_AND_HEAL",
@@ -189,4 +260,4 @@
     }
 </script>
 </body>
-</html
+</html>
