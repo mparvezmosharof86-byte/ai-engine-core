@@ -29,8 +29,6 @@
         .status-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid #222f47; margin-bottom: 12px; }
         .status-light { width: 16px; height: 16px; border-radius: 50%; display: inline-block; box-shadow: 0 0 12px currentColor; }
         .light-blue { background: #38bdf8; color: #38bdf8; }
-        .light-yellow { background: #eab308; color: #eab308; }
-        .light-red { background: #ef4444; color: #ef4444; }
         .badge { background: #1e293b; padding: 4px 10px; border-radius: 20px; font-size: 12px; color: #94a3b8; }
         
         /* Voice Chat UI */
@@ -38,7 +36,7 @@
         .voice-circle.listening { background: #ef4444; box-shadow: 0 0 35px rgba(239, 68, 68, 0.8); animation: pulse 1.2s infinite; }
         .voice-circle.speaking { background: #10b981; box-shadow: 0 0 35px rgba(16, 185, 129, 0.8); animation: pulse 1s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
-        .voice-log { background: #0f172a; padding: 12px; border-radius: 8px; min-height: 70px; font-size: 14px; margin-top: 15px; border-left: 4px solid #38bdf8; text-align: left; }
+        .voice-log { background: #0f172a; padding: 12px; border-radius: 8px; min-height: 70px; font-size: 14px; margin-top: 15px; border-left: 4px solid #38bdf8; text-align: left; line-height: 1.5; }
         
         #handshake-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0b0f19; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
         .checkmark { width: 80px; height: 80px; border-radius: 50%; display: block; stroke-width: 4; stroke: #38bdf8; stroke-miterlimit: 10; margin-bottom: 20px; }
@@ -55,23 +53,12 @@
     <!-- লগইন স্ক্রিন -->
     <div id="login-section" class="card" style="margin-top: 50px; display: none;">
         <h2>🔐 Master Admin Access</h2>
-        <p style="color: #94a3b8; margin-bottom: 15px;">আপনার অ্যাডমিন ইমেইল ও পাসওয়ার্ড দিন</p>
         <input type="email" id="login-email" placeholder="Admin Email">
         <input type="password" id="login-password" placeholder="Admin Password">
         <button class="btn-blue" onclick="adminLogin()">প্রবেশ করুন (Secure Login)</button>
     </div>
 
-    <!-- হ্যান্ডশেক ওভারলে -->
-    <div id="handshake-overlay">
-        <svg class="checkmark" viewBox="0 0 52 52">
-            <circle cx="26" cy="26" r="25" fill="none" stroke="#38bdf8" stroke-width="4"/>
-            <path fill="none" stroke="#38bdf8" stroke-width="5" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
-        </svg>
-        <h3 id="handshake-text" style="color: #38bdf8;">সার্ভার কানেকশন ভেরিফাইড!</h3>
-        <p id="handshake-sub" style="color: #94a3b8; font-size: 13px;">সব সিস্টেম সম্পূর্ণ অ্যাক্টিভ হচ্ছে...</p>
-    </div>
-
-    <!-- মূল কন্ট্রোল ড্যাশবোর্ড -->
+    <!-- ড্যাশবোর্ড -->
     <div id="dashboard-section" style="display: none;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <div>
@@ -94,7 +81,7 @@
         <div id="tab-voice" class="tab-content">
             <div class="card" style="text-align: center;">
                 <h3>🎙️ ৭বি সুপারভাইজার লাইভ কেবিন</h3>
-                <p style="font-size: 12px; color: #94a3b8;">মাইকে চাপ দিয়ে কথা বলুন, অথবা নিচে লিখে পাঠান। ৭বি সরাসরি মুখে বাংলায় উত্তর দেবে।</p>
+                <p style="font-size: 12px; color: #94a3b8;">যেকোনো প্রশ্ন করুন। ৭বি সম্পূর্ণ নিজে চিন্তা করে মানুষের মতো স্পষ্ট কণ্ঠে উত্তর দেবে।</p>
                 
                 <div id="mic-btn" class="voice-circle" onclick="startMicRecording()">
                     🎤
@@ -105,23 +92,23 @@
                 </div>
 
                 <div style="display: flex; gap: 8px;">
-                    <input type="text" id="voice-text-input" placeholder="এখানে লিখেও ৭বি-কে বলতে পারেন..." style="margin-bottom: 0;">
+                    <input type="text" id="voice-text-input" placeholder="এখানে লিখেও যেকোনো প্রশ্ন করতে পারেন..." style="margin-bottom: 0;">
                     <button class="btn-green btn-small" onclick="sendTextTo7b()" style="white-space: nowrap;">পাঠান ➔</button>
                 </div>
 
                 <div class="voice-log" id="voice-transcript">
-                    <span style="color: #94a3b8;">কথোপকথন এখানে দেখা যাবে এবং ৭বি সরাসরি স্পিকারে কথা বলবে...</span>
+                    <span style="color: #94a3b8;">কথোপকথন এখানে দেখা যাবে এবং ৭বি মানুষের মতো মিষ্টি কণ্ঠে কথা বলবে...</span>
                 </div>
             </div>
         </div>
 
-        <!-- অন্যান্য ট্যাবসমূহ -->
+        <!-- ওভারভিউ -->
         <div id="tab-overview" class="tab-content" style="display: none;">
             <div class="card">
                 <div class="status-header">
                     <div>
                         <h3>ইঞ্জিন হেলথ স্ট্যাটাস</h3>
-                        <span id="status-desc" class="badge">Connecting...</span>
+                        <span id="status-desc" class="badge">Checking...</span>
                     </div>
                     <div id="signal-light" class="status-light light-blue"></div>
                 </div>
@@ -140,7 +127,7 @@
         <div id="tab-training" class="tab-content" style="display: none;">
             <div class="card">
                 <h3>🧠 ডিরেক্টর ব্রেইন ও সিনেমাটোগ্রাফি</h3>
-                <textarea id="training-knowledge" rows="4" placeholder="যেমন: 'সব সময় সিনেমাটিক ড্রোন শট ব্যবহার করবে এবং সংলাপ বাংলায় রাখবে।'"></textarea>
+                <textarea id="training-knowledge" rows="4" placeholder="যেমন: 'সব সময় সিনেমাটিক ড্রোন শট ব্যবহার করবে।'"></textarea>
                 <button class="btn-blue" onclick="saveTrainingKnowledge()">Save & Update AI Brain</button>
             </div>
         </div>
@@ -208,24 +195,12 @@
         if (confirm("আপনি কি নিশ্চিত লগআউট করতে চান?")) auth.signOut();
     }
 
+    // -------------------------------------------------------------
+    // ভয়েস ইনপুট হ্যান্ডলার (Speech to Text)
+    // -------------------------------------------------------------
     function startMicRecording() {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ audio: true })
-                .then(stream => {
-                    stream.getTracks().forEach(track => track.stop());
-                    runActualSpeechRecognition();
-                })
-                .catch(() => {
-                    runActualSpeechRecognition();
-                });
-        } else {
-            runActualSpeechRecognition();
-        }
-    }
-
-    function runActualSpeechRecognition() {
         if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-            alert("আপনার ডিভাইসে সরাসরি ভয়েস সাপোর্ট নেই। নিচের টেক্সট বক্সে লিখে পাঠান, ৭বি মুখে উত্তর দেবে।");
+            alert("আপনার ব্রাউজারে সরাসরি ভয়েস সাপোর্ট নেই। নিচের টেক্সট বক্সে লিখে পাঠান, ৭বি মুখে উত্তর দেবে।");
             return;
         }
 
@@ -269,45 +244,66 @@
         get7BVoiceReply(text);
     }
 
-    // ৭বি মাস্টারের ১০০% খাঁটি বাংলা ভয়েস প্রসেসর
+    // -------------------------------------------------------------
+    // ৭বি মাস্টারের ডাইনামিক লাইভ ইন্টেলিজেন্স (নো ডামি, নো মুখস্থ কথা)
+    // -------------------------------------------------------------
     function get7BVoiceReply(userMessage) {
         document.getElementById('mic-btn').className = 'voice-circle speaking';
         document.getElementById('voice-status').innerText = '৭বি চিন্তা করছে...';
 
-        const prompt = `System: তুমি মালিকের বিশ্বস্ত ৭বি এআই সুপারভাইজার। মালিককে 'মালিক' ডাকবে। কখনোই কোনো ইংরেজি কোড, JSON বা ভুল টেক্সট বলবে না। সবসময় মিষ্টি ও সম্মানজনক খাঁটি বাংলায় ২-৩ লাইনে মুখে বলার উপযোগী উত্তর দেবে।\nUser: ${userMessage}`;
+        const promptText = `তুমি ৭বি এআই সুপারভাইজার। তোমার ক্রিয়েটর ও মাস্টার তোমাকে প্রশ্ন করেছেন। তুমি তাকে সবসময় 'মালিক' বলে সম্বোধন করবে এবং ১০০% সত্য কথা বলবে। কোনো মুখস্থ বা একঘেয়ে কথা বলবে না। মালিকের প্রশ্নের সঠিক ও বাস্তবসম্মত উত্তর সুন্দর খাঁটি বাংলায় ১-২ লাইনে মুখে বলার উপযোগী করে দাও। মালিকের প্রশ্ন: "${userMessage}"`;
 
-        // ফ্রি ও স্ট্যাবল ওপেন-এআই মডেলে রুট করা হয়েছে
-        fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai`)
+        // কোনো ফিক্সড মডেল প্যারামিটার ছাড়া সরাসরি ডাইনামিক রুট
+        const targetUrl = `https://text.pollinations.ai/${encodeURIComponent(promptText)}`;
+
+        fetch(targetUrl)
             .then(async res => {
                 const reply = await res.text();
-                // যদি ভুলবশত কোনো কোড বা এরর আসে, তা আটকে দেওয়া
+                // কোনো এরর কোড বা 404 আসলে আটকে দেওয়া
                 if (reply.includes("404") || reply.includes("NOT_FOUND") || reply.startsWith("{")) {
-                    throw new Error("Invalid format");
+                    throw new Error("Invalid output");
                 }
-                return reply;
+                return reply.trim();
             })
             .then(reply => {
                 document.getElementById('voice-transcript').innerHTML += `<br><br><strong style="color:#10b981;">৭বি:</strong> ${reply}`;
-                playBengaliVoice(reply);
+                playNaturalVoice(reply);
             })
             .catch(() => {
-                const fallback = "মালিক, আমি আপনার কথা শুনতে পেয়েছি। আমি সার্বক্ষণিক সজাগ আছি। সার্ভার সুস্থ আছে, আমাকে কী হুকুম করতে চান?";
-                document.getElementById('voice-transcript').innerHTML += `<br><br><strong style="color:#10b981;">৭বি:</strong> ${fallback}`;
-                playBengaliVoice(fallback);
+                // সংযোগে সমস্যা হলে সোজা সত্য স্বীকার করা (কোনো ডামি উত্তর নয়)
+                const realStatus = "মালিক, ইন্টারনেট সংযোগের কারণে এই মুহূর্তে আমার ক্লাউড ব্রেইনের সাথে যোগাযোগ ধীরগতির হচ্ছে। আপনি আবার বলুন, আমি শুনছি।";
+                document.getElementById('voice-transcript').innerHTML += `<br><br><strong style="color:#ef4444;">৭বি:</strong> ${realStatus}`;
+                playNaturalVoice(realStatus);
             });
     }
 
-    function playBengaliVoice(msgText) {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(msgText);
-            utterance.lang = 'bn-BD';
-            utterance.rate = 1.0;
-            utterance.onend = () => { resetMicUI(); };
-            window.speechSynthesis.speak(utterance);
-        } else {
+    // -------------------------------------------------------------
+    // মানুষের মতো স্পষ্ট ও স্বাভাবিক নিউরাল কণ্ঠ (Human-Like Audio Stream)
+    // -------------------------------------------------------------
+    function playNaturalVoice(msgText) {
+        // গুগলের অফিশিয়াল নিউরাল বাংলা ভয়েস অডিও স্ট্রিম
+        const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=bn&client=tw-ob&q=${encodeURIComponent(msgText)}`;
+        const audio = new Audio(audioUrl);
+
+        audio.onended = () => {
             resetMicUI();
-        }
+        };
+
+        audio.onerror = () => {
+            // অডিও লোডে সমস্যা হলে ব্যাকআপ স্পিচ
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(msgText);
+                utterance.lang = 'bn-BD';
+                utterance.onend = () => resetMicUI();
+                window.speechSynthesis.speak(utterance);
+            } else {
+                resetMicUI();
+            }
+        };
+
+        audio.play().catch(() => {
+            resetMicUI();
+        });
     }
 
     function startDashboardSync() {
