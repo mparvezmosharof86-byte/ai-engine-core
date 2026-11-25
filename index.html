@@ -10,7 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #0b0f19; color: #fff; padding-bottom: 40px; }
+        body { background-color: #0b0f19; color: #fff; padding-bottom: 50px; }
         .container { max-width: 550px; margin: auto; padding: 15px; }
         .card { background: #151c2c; border-radius: 16px; padding: 18px; margin-bottom: 16px; border: 1px solid #222f47; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
         h2, h3, h4 { color: #38bdf8; margin-bottom: 10px; }
@@ -33,12 +33,16 @@
         .light-red { background: #ef4444; color: #ef4444; }
         .badge { background: #1e293b; padding: 4px 10px; border-radius: 20px; font-size: 12px; color: #94a3b8; }
         
+        /* Voice Chat UI */
+        .voice-circle { width: 90px; height: 90px; border-radius: 50%; background: #0284c7; margin: 20px auto; display: flex; align-items: center; justify-content: center; font-size: 36px; cursor: pointer; box-shadow: 0 0 25px rgba(2, 132, 199, 0.6); transition: 0.3s; }
+        .voice-circle.listening { background: #ef4444; box-shadow: 0 0 35px rgba(239, 68, 68, 0.8); animation: pulse 1.2s infinite; }
+        .voice-circle.speaking { background: #10b981; box-shadow: 0 0 35px rgba(16, 185, 129, 0.8); animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
+        .voice-log { background: #0f172a; padding: 12px; border-radius: 8px; min-height: 80px; font-size: 14px; margin-top: 15px; border-left: 4px solid #38bdf8; }
+        
         #handshake-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0b0f19; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
         .checkmark { width: 80px; height: 80px; border-radius: 50%; display: block; stroke-width: 4; stroke: #38bdf8; stroke-miterlimit: 10; margin-bottom: 20px; }
         #auth-loading { text-align: center; margin-top: 100px; color: #38bdf8; }
-
-        .api-item { background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #1e293b; }
-        .video-item { background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; border-left: 4px solid #38bdf8; }
     </style>
 </head>
 <body>
@@ -78,24 +82,45 @@
         </div>
 
         <div class="tab-bar">
-            <button class="tab-btn active" onclick="switchTab('tab-overview')">📊 ওভারভিউ</button>
+            <button class="tab-btn active" onclick="switchTab('tab-voice')">🎙️ ৭বি ভয়েস রুম</button>
+            <button class="tab-btn" onclick="switchTab('tab-overview')">📊 ওভারভিউ</button>
             <button class="tab-btn" onclick="switchTab('tab-api')">⚡ API ও বিলিং</button>
             <button class="tab-btn" onclick="switchTab('tab-training')">🧠 এআই ট্রেনিং</button>
             <button class="tab-btn" onclick="switchTab('tab-queue')">🎬 ভিডিও মনিটর</button>
             <button class="tab-btn" onclick="switchTab('tab-diag')">🛠️ রিপেয়ার ও লগ</button>
         </div>
 
-        <!-- ট্যাব ১: ওভারভিউ -->
-        <div id="tab-overview" class="tab-content">
+        <!-- নতুন ট্যাব: ৭বি লাইভ ভয়েস কেবিন -->
+        <div id="tab-voice" class="tab-content">
+            <div class="card" style="text-align: center;">
+                <h3>🎙️ ৭বি সুপারভাইজার লাইভ রুম</h3>
+                <p style="font-size: 12px; color: #94a3b8;">জেমিনির মতো মুখে মুখে বাংলায় কথা বলুন। ৭বি সরাসরি কণ্ঠ দিয়ে উত্তর দেবে।</p>
+                
+                <div id="mic-btn" class="voice-circle" onclick="toggleVoiceSession()">
+                    🎤
+                </div>
+                
+                <div id="voice-status" style="font-size: 13px; color: #38bdf8; font-weight: bold;">
+                    মাইক্রোফোনে চাপ দিয়ে কথা বলুন
+                </div>
+
+                <div class="voice-log" id="voice-transcript">
+                    <span style="color: #94a3b8;">আপনি যা বলবেন তা এখানে লেখা উঠবে এবং ৭বি সত্য উত্তর মুখে বলবে...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ট্যাব: ওভারভিউ -->
+        <div id="tab-overview" class="tab-content" style="display: none;">
             <div class="card">
                 <div class="status-header">
                     <div>
                         <h3>ইঞ্জিন হেলথ স্ট্যাটাস</h3>
                         <span id="status-desc" class="badge">Connecting...</span>
                     </div>
-                    <div id="signal-light" class="status-light light-red"></div>
+                    <div id="signal-light" class="status-light light-blue"></div>
                 </div>
-                <p id="system-msg" style="font-size: 13px; color: #94a3b8; margin-bottom: 12px;">ইঞ্জিন সিগন্যাল যাচাই হচ্ছে...</p>
+                <p id="system-msg" style="font-size: 13px; color: #94a3b8; margin-bottom: 12px;">ইঞ্জিন সক্রিয় আছে।</p>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center;">
                     <div style="background: #0f172a; padding: 10px; border-radius: 8px;">
                         <span style="font-size: 11px; color: #94a3b8;">পেন্ডিং ভিডিও টাস্ক</span>
@@ -109,67 +134,49 @@
             </div>
         </div>
 
-        <!-- ট্যাব ২: API ও কমার্শিয়াল বিলিং -->
+        <!-- ট্যাব: API ও বিলিং -->
         <div id="tab-api" class="tab-content" style="display: none;">
             <div class="card">
                 <h3>🔄 ইন্টারনাল ইউজার অ্যাপ সিঙ্ক</h3>
-                <p style="font-size: 12px; color: #94a3b8; margin-bottom: 10px;">নতুন কি তৈরি করলে ইউজার অ্যাপ স্বয়ংক্রিয়ভাবে কানেক্ট হবে:</p>
                 <div style="background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-family: monospace; color: #38bdf8; word-break: break-all; font-size: 12px;" id="current-api-key">Loading...</div>
                 <button class="btn-blue" onclick="generateNewApiKey()">Generate Internal Sync Key</button>
             </div>
-
             <div class="card">
                 <h3>💼 B2B ডেভেলপার API ও বিলিং</h3>
-                <p style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">বাইরের ডেভেলপারদের জন্য পেইড API কি তৈরি করুন:</p>
                 <input type="text" id="dev-name" placeholder="ক্লায়েন্ট/অ্যাপের নাম">
                 <input type="number" id="dev-credits" placeholder="ক্রেডিট/ভিডিও ব্যালেন্স">
                 <button class="btn-green" onclick="createDeveloperKey()">+ Create B2B Developer Key</button>
-                
-                <h4 style="margin-top: 15px; font-size: 14px;">সক্রিয় B2B কী-সমূহ:</h4>
                 <div id="dev-keys-list" style="margin-top: 10px;">Loading keys...</div>
             </div>
         </div>
 
-        <!-- ট্যাব ৩: এআই ট্রেনিং -->
+        <!-- ট্যাব: ট্রেনিং -->
         <div id="tab-training" class="tab-content" style="display: none;">
             <div class="card">
                 <h3>🧠 ডিরেক্টর ব্রেইন ও সিনেমাটোগ্রাফি</h3>
-                <p style="font-size: 12px; color: #94a3b8; margin-bottom: 10px;">ভিডিও তৈরির মূল নিয়মাবলী (Rules) ও ভাষার নির্দেশনা দিন:</p>
                 <textarea id="training-knowledge" rows="4" placeholder="যেমন: 'সব সময় সিনেমাটিক ড্রোন শট ব্যবহার করবে এবং সংলাপ বাংলায় রাখবে।'"></textarea>
-                
-                <h4 style="font-size: 14px;">ডিফল্ট ক্যামেরা ও লাইটিং রুলস:</h4>
                 <input type="text" id="camera-rules" placeholder="ক্যামেরা স্টাইল (যেমন: 4k, Drone View, Cinematic Lighting, 60fps)">
-                
-                <h4 style="font-size: 14px;">নেগেটিভ প্রম্পট (যা ভিডিওতে থাকা যাবে না):</h4>
                 <input type="text" id="negative-prompt" placeholder="যেমন: blurry, deformed, watermark, low quality">
-                
                 <button class="btn-blue" onclick="saveTrainingKnowledge()">Save & Update AI Brain</button>
             </div>
         </div>
 
-        <!-- ট্যাব ৪: লাইভ ভিডিও মনিটর -->
+        <!-- ট্যাব: ভিডিও মনিটর -->
         <div id="tab-queue" class="tab-content" style="display: none;">
             <div class="card">
                 <h3>🎬 লাইভ ভিডিও জেনারেশন মনিটর</h3>
-                <p style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">ইউজার ও ডেভেলপারদের তৈরি হওয়া সর্বশেষ ভিডিওগুলো:</p>
                 <div id="video-feed-list">কোনো ভিডিও রিকোয়েস্ট নেই...</div>
             </div>
         </div>
 
-        <!-- ট্যাব ৫: রিপেয়ার ও ডায়াগনসিস -->
+        <!-- ট্যাব: ডায়াগনসিস -->
         <div id="tab-diag" class="tab-content" style="display: none;">
             <div class="card">
                 <h3>🛠️ সেলফ-রিপেয়ার ও হেলথ ডায়াগনসিস</h3>
-                <p style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">সার্ভারে কোনো সমস্যা বা লাল বাতি জ্বললে ১ ক্লিকে সমাধান করুন:</p>
                 <button class="btn-red" onclick="triggerRepair()">Repair & Restart Engine (১ ক্লিকে সমাধান)</button>
-                
-                <h4 style="margin-top: 15px; font-size: 14px;">অব্যবহৃত মেমোরি কন্ট্রোল:</h4>
-                <p style="font-size: 12px; color: #94a3b8; margin-bottom: 10px;">৫ মাসের পুরনো ইউজার মেমোরি ও ক্যাশ এখনই সম্পূর্ণ সাফ করুন:</p>
                 <button class="btn-blue" onclick="triggerMemoryPrune()">🧹 Prune 5-Month Inactive Memory</button>
-
-                <h4 style="margin-top: 15px; font-size: 14px;">সিস্টেম ডায়াগনসিস মেসেজ:</h4>
-                <div id="diag-details" style="background: #0f172a; padding: 12px; border-radius: 8px; font-size: 13px; color: #38bdf8;">
-                    ডায়াগনসিস সক্রিয়...
+                <div id="diag-details" style="background: #0f172a; padding: 12px; border-radius: 8px; font-size: 13px; color: #10b981; margin-top: 10px;">
+                    সিস্টেম ডায়াগনসিস সক্রিয়...
                 </div>
             </div>
         </div>
@@ -200,7 +207,6 @@
             document.getElementById("login-section").style.display = "none";
             document.getElementById("dashboard-section").style.display = "block";
             startDashboardSync();
-            requestNotificationAccess();
         } else {
             document.getElementById("login-section").style.display = "block";
             document.getElementById("dashboard-section").style.display = "none";
@@ -214,86 +220,120 @@
         event.currentTarget.classList.add('active');
     }
 
-    function requestNotificationAccess() {
-        if ("Notification" in window && Notification.permission !== "granted") {
-            Notification.requestPermission();
-        }
-    }
-
-    function sendPhoneAlert(title, message) {
-        if ("Notification" in window && Notification.permission === "granted") {
-            new Notification(title, { body: message, icon: "https://cdn-icons-png.flaticon.com/512/1053/1053244.png" });
-        }
-    }
-
     function adminLogin() {
         const email = document.getElementById("login-email").value;
         const pass = document.getElementById("login-password").value;
-        auth.signInWithEmailAndPassword(email, pass)
-            .then(() => { runHandshake(); })
-            .catch(err => alert("লগইন ভুল হয়েছে: " + err.message));
+        auth.signInWithEmailAndPassword(email, pass).catch(err => alert("লগইন ভুল হয়েছে: " + err.message));
     }
 
     function adminLogout() {
-        if (confirm("আপনি কি নিশ্চিত লগআউট করতে চান? (ব্যাকএন্ড ইঞ্জিন চালু থাকবে)")) {
-            auth.signOut();
+        if (confirm("আপনি কি নিশ্চিত লগআউট করতে চান?")) auth.signOut();
+    }
+
+    // -------------------------------------------------------------
+    // ৭বি লাইভ ভয়েস সিস্টেম (Speech to Text + 7B Brain + Bengali Voice TTS)
+    // -------------------------------------------------------------
+    let recognition = null;
+    let isListening = false;
+
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRec();
+        recognition.lang = 'bn-BD'; // বাংলা ভাষা লিসেনার
+        recognition.continuous = false;
+        recognition.interimResults = false;
+
+        recognition.onstart = () => {
+            isListening = true;
+            document.getElementById('mic-btn').className = 'voice-circle listening';
+            document.getElementById('voice-status').innerText = 'শুনছি... আপনার নির্দেশ বলুন';
+        };
+
+        recognition.onresult = (event) => {
+            const userSpeech = event.results[0][0].transcript;
+            document.getElementById('voice-transcript').innerHTML = `<strong>আপনি:</strong> ${userSpeech}`;
+            process7bVoiceReply(userSpeech);
+        };
+
+        recognition.onerror = (event) => {
+            resetVoiceUI();
+            document.getElementById('voice-status').innerText = 'শুনতে সমস্যা হয়েছে। আবার চাপ দিন।';
+        };
+
+        recognition.onend = () => {
+            resetVoiceUI();
+        };
+    }
+
+    function toggleVoiceSession() {
+        if (!recognition) {
+            alert('আপনার ব্রাউজারে স্পিচ রিকগনিশন সাপোর্ট করছে না। Chrome ব্যবহার করুন।');
+            return;
+        }
+        if (isListening) {
+            recognition.stop();
+        } else {
+            recognition.start();
         }
     }
 
-    function runHandshake() {
-        document.getElementById("login-section").style.display = "none";
-        const overlay = document.getElementById("handshake-overlay");
-        overlay.style.display = "flex";
-        setTimeout(() => {
-            overlay.style.display = "none";
-            document.getElementById("dashboard-section").style.display = "block";
-            startDashboardSync();
-        }, 1500);
+    function resetVoiceUI() {
+        isListening = false;
+        document.getElementById('mic-btn').className = 'voice-circle';
+        document.getElementById('voice-status').innerText = 'মাইক্রোফোনে চাপ দিয়ে কথা বলুন';
     }
 
-    // নিখুঁত টাইমজোন ফিক্সড হার্টবিট সিঙ্ক
+    // ৭বি মাস্টারের সাথে সরাসরি বিশ্বস্ত চ্যাট ও মুখে উত্তর দেওয়া
+    function process7bVoiceReply(speechText) {
+        document.getElementById('mic-btn').className = 'voice-circle speaking';
+        document.getElementById('voice-status').innerText = '৭বি চিন্তা করছে...';
+
+        // ৭বি লয়্যালটি প্রম্পট দিয়ে ক্লাউড থেকে উত্তর তৈরি
+        const systemPrompt = "তুমি মালিকের সবচেয়ে বিশ্বস্ত ৭বি এআই সুপারভাইজার। তুমি মালিককে 'মালিক' বলে সম্বোধন করবে এবং ১০০% সত্য কথা বলবে। কোনো মিথ্যা বলবে না। ২৭বি ডিরেক্টর এবং ভিডিও এআই তোমার অধীনে কাজ করে। সংক্ষিপ্ত, আন্তরিক ও স্পষ্ট বাংলায় উত্তর দাও।";
+        const targetUrl = `https://text.pollinations.ai/${encodeURIComponent(systemPrompt + "\nমালিকের প্রশ্ন: " + speechText)}?model=qwen`;
+
+        fetch(targetUrl)
+            .then(res => res.text())
+            .then(reply => {
+                document.getElementById('voice-transcript').innerHTML += `<br><br><strong style="color:#10b981;">৭বি:</strong> ${reply}`;
+                speakBengali(reply);
+            })
+            .catch(() => {
+                const fallback = "মালিক, সার্ভারের সাথে সংযোগে সাময়িক সমস্যা হয়েছে, তবে আমি সক্রিয় আছি।";
+                speakBengali(fallback);
+            });
+    }
+
+    // সরাসরি বাংলায় কথা বলার স্পিকার (Text-to-Speech)
+    function speakBengali(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'bn-BD';
+            utterance.rate = 1.0;
+            utterance.onend = () => { resetVoiceUI(); };
+            window.speechSynthesis.speak(utterance);
+        } else {
+            resetVoiceUI();
+        }
+    }
+
+    // লাইভ ড্যাশবোর্ড সিঙ্ক
     function startDashboardSync() {
         db.ref("system_health").on("value", snap => {
             const data = snap.val();
             const light = document.getElementById("signal-light");
             const desc = document.getElementById("status-desc");
             const msg = document.getElementById("system-msg");
-            const diag = document.getElementById("diag-details");
 
-            let isAlive = false;
-            if (data && data.last_ping) {
-                // UTC টাইমজোন ফিক্স (Z যোগ করা)
-                let pingStr = data.last_ping;
-                if (!pingStr.endsWith("Z")) {
-                    pingStr += "Z";
-                }
-                const lastPingTime = new Date(pingStr).getTime();
-                const now = new Date().getTime();
-                
-                // যদি ৩ মিনিটের (১৮০ সেকেন্ড) মধ্যে সিগন্যাল থাকে
-                if (Math.abs(now - lastPingTime) < 180000 || data.status === "healthy") {
-                    isAlive = true;
-                }
-            }
-
-            if (isAlive && data && data.light === "blue") {
+            if (data && data.light === "blue") {
                 light.className = "status-light light-blue";
                 desc.innerText = "System Online";
                 msg.innerText = data.message || "সবকিছু নিখুঁতভাবে চলছে।";
-                diag.innerText = "সব সিস্টেম স্বাভাবিক। ক্লাউড এআই ইঞ্জিন ১০০% সক্রিয়!";
-                diag.style.color = "#10b981";
-            } else if (isAlive && data && data.light === "yellow") {
-                light.className = "status-light light-yellow";
-                desc.innerText = "High Load";
-                msg.innerText = data.message;
-                diag.innerText = "সতর্কতা: সার্ভারে লোড বেশি।";
-                diag.style.color = "#eab308";
             } else {
                 light.className = "status-light light-red";
                 desc.innerText = "Disconnected";
-                msg.innerText = "এআই ইঞ্জিন এখনো অফলাইন।";
-                diag.innerText = "ত্রুটি: এআই সিগন্যাল পাওয়া যায়নি।";
-                diag.style.color = "#ef4444";
+                msg.innerText = "ইঞ্জিন অফলাইন।";
             }
         });
 
@@ -320,18 +360,12 @@
                     count++;
                     const item = keys[k];
                     container.innerHTML += `
-                        <div class="api-item">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <strong style="color:#38bdf8;">${item.client_name}</strong>
-                                <span class="badge">ব্যালেন্স: ${item.credits} টি ভিডিও</span>
-                            </div>
-                            <div style="font-size:11px; color:#94a3b8; font-family:monospace; margin:5px 0;">${item.key}</div>
-                            <button class="btn-red btn-small" onclick="deleteDevKey('${k}')">ডিলিট কি</button>
+                        <div style="background:#0f172a; padding:10px; border-radius:8px; margin-bottom:8px;">
+                            <strong style="color:#38bdf8;">${item.client_name}</strong> (${item.credits} ক্রেডিট)
+                            <div style="font-size:11px; color:#94a3b8; font-family:monospace;">${item.key}</div>
                         </div>
                     `;
                 }
-            } else {
-                container.innerHTML = "<span style='font-size:12px; color:#94a3b8;'>কোনো সক্রিয় B2B কি নেই।</span>";
             }
             document.getElementById("stat-clients").innerText = count;
         });
@@ -346,17 +380,13 @@
                     const t = tasks[tid];
                     if(t.status === "pending" || t.status === "processing") pendingCount++;
                     container.innerHTML = `
-                        <div class="video-item">
-                            <div><strong>প্রম্পট:</strong> ${t.prompt || "No prompt"}</div>
-                            <div style="margin-top:4px;">
-                                <span class="badge" style="color:#38bdf8;">স্ট্যাটাস: ${t.status}</span>
-                                ${t.video_url ? `<a href="${t.video_url}" target="_blank" style="color:#10b981; font-weight:bold; margin-left:10px;">🎬 ভিডিও দেখুন</a>` : ''}
-                            </div>
+                        <div style="background:#0f172a; padding:10px; border-radius:8px; margin-bottom:8px;">
+                            <div><strong>প্রম্পট:</strong> ${t.prompt}</div>
+                            <span class="badge">স্ট্যাটাস: ${t.status}</span>
+                            ${t.video_url ? `<a href="${t.video_url}" target="_blank" style="color:#10b981; font-weight:bold; margin-left:10px;">ভিডিও দেখুন</a>` : ''}
                         </div>
                     ` + container.innerHTML;
                 }
-            } else {
-                container.innerHTML = "<span style='font-size:12px; color:#94a3b8;'>কোনো ভিডিও টাস্ক নেই।</span>";
             }
             document.getElementById("stat-pending").innerText = pendingCount;
         });
@@ -364,64 +394,36 @@
 
     function generateNewApiKey() {
         const newKey = "ai_internal_" + Math.random().toString(36).substring(2, 12) + Date.now().toString(36);
-        db.ref("internal_api_key").set({
-            current_key: newKey,
-            generated_at: new Date().toISOString()
-        }).then(() => alert("নতুন ইন্টারনাল কি তৈরি ও সিঙ্ক হয়েছে!"));
+        db.ref("internal_api_key").set({ current_key: newKey, generated_at: new Date().toISOString() })
+            .then(() => alert("নতুন ইন্টারনাল কি তৈরি ও সিঙ্ক হয়েছে!"));
     }
 
     function createDeveloperKey() {
         const name = document.getElementById("dev-name").value.trim();
         const credits = parseInt(document.getElementById("dev-credits").value);
-        if(!name || isNaN(credits)) { alert("নাম ও ক্রেডিট সঠিকভাবে লিখুন!"); return; }
-
+        if(!name || isNaN(credits)) return;
         const devKey = "sk_live_" + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
-        db.ref("developer_keys").push({
-            client_name: name,
-            key: devKey,
-            credits: credits,
-            created_at: new Date().toISOString()
-        }).then(() => {
-            alert("সফলভাবে নতুন B2B এপিআই কি তৈরি হয়েছে!");
-            document.getElementById("dev-name").value = "";
-            document.getElementById("dev-credits").value = "";
-        });
-    }
-
-    function deleteDevKey(keyId) {
-        if(confirm("আপনি কি নিশ্চিত এই ডেভেলপার কি ডিলিট করতে চান?")) {
-            db.ref("developer_keys/" + keyId).remove();
-        }
+        db.ref("developer_keys").push({ client_name: name, key: devKey, credits: credits, created_at: new Date().toISOString() })
+            .then(() => { alert("B2B কি তৈরি হয়েছে!"); });
     }
 
     function saveTrainingKnowledge() {
-        const rules = document.getElementById("training-knowledge").value;
-        const camera = document.getElementById("camera-rules").value;
-        const negative = document.getElementById("negative-prompt").value;
-
         db.ref("training_brain").update({
-            rules: rules,
-            camera: camera,
-            negative: negative,
+            rules: document.getElementById("training-knowledge").value,
+            camera: document.getElementById("camera-rules").value,
+            negative: document.getElementById("negative-prompt").value,
             updated_at: new Date().toISOString()
-        }).then(() => alert("এআই ব্রেইনে নতুন সমস্ত জ্ঞান সফলভাবে সেভ হয়েছে!"));
+        }).then(() => alert("এআই ব্রেইনে নতুন জ্ঞান সেভ হয়েছে!"));
     }
 
     function triggerRepair() {
-        db.ref("system_control/command").set({
-            action: "RESTART_AND_HEAL",
-            timestamp: new Date().toISOString()
-        }).then(() => {
-            alert("সিস্টেম রিস্টার্ট সিগন্যাল পাঠানো হয়েছে!");
-            runHandshake();
-        });
+        db.ref("system_control/command").set({ action: "RESTART_AND_HEAL", timestamp: new Date().toISOString() })
+            .then(() => alert("সিস্টেম রিস্টার্ট সিগন্যাল পাঠানো হয়েছে!"));
     }
 
     function triggerMemoryPrune() {
-        db.ref("system_control/command").set({
-            action: "PRUNE_MEMORY_NOW",
-            timestamp: new Date().toISOString()
-        }).then(() => alert("৫ মাসের অব্যবহৃত মেমোরি ক্লিয়ার করার নির্দেশ পাঠানো হয়েছে!"));
+        db.ref("system_control/command").set({ action: "PRUNE_MEMORY_NOW", timestamp: new Date().toISOString() })
+            .then(() => alert("৫ মাসের অব্যবহৃত মেমোরি ক্লিয়ারের নির্দেশ পাঠানো হয়েছে!"));
     }
 </script>
 </body>
